@@ -1,0 +1,64 @@
+{
+  "name": "@bandwise/core",
+  "version": "0.1.0",
+  "description": "Bandwise question set spec format, lints and run engine. Pure TypeScript, no I/O.",
+  "keywords": [
+    "bandwise",
+    "system-one",
+    "jev",
+    "typesafe",
+    "llm",
+    "classification",
+    "decisions"
+  ],
+  "homepage": "https://docs.bandwise.dev",
+  "bugs": {
+    "url": "https://github.com/glacer06/bandwise-kit/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glacer06/bandwise-kit.git",
+    "directory": "packages/core"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "@bandwise/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./contracts": {
+      "@bandwise/source": "./src/contracts/index.ts",
+      "types": "./dist/contracts/index.d.ts",
+      "import": "./dist/contracts/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@bandwise/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "name": "choice-none-chosen",
+  "provider": "typesafe",
+  "openapiVersion": "0.2.0",
+  "requestId": "req_fx_choice_none",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "Lunch",
+        "body": "Anyone up for tacos on Friday?"
+      }
+    },
+    "model": "jev-1.13.0",
+    "questions": {
+      "department": {
+        "type": "choice",
+        "instructions": "Which team should handle `ticket`?",
+        "criteria": {
+          "billing": "Payments, refunds",
+          "technical": "Bugs, outages",
+          "account": "Login and profile",
+          "none_of_these": null
+        }
+      }
+    }
+  },
+  "response": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "department": {
+        "type": "choice",
+        "choice": "none_of_these",
+        "confidence": 0.77,
+        "probabilities": {
+          "billing": 0.02,
+          "technical": 0.03,
+          "account": 0.02,
+          "none_of_these": 0.93
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 101,
+      "output_tokens": 6
+    }
+  }
+}

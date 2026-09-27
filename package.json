@@ -1,0 +1,22 @@
+{
+  "name": "bandwise-kit",
+  "private": true,
+  "description": "The open part of Bandwise: the question set spec format, the local runner and CLI, the template pack and the find-decisions skill.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glacer06/bandwise-kit.git"
+  },
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "bandwise": "node packages/cli/dist/bin.js"
+  }
+}

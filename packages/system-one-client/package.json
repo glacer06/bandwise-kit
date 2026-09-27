@@ -1,0 +1,66 @@
+{
+  "name": "@bandwise/system-one-client",
+  "version": "0.1.0",
+  "description": "Transports for Bandwise runs: System One models through TypeSafe, OpenRouter or the Vercel AI Gateway with your own key, or recorded fixtures with no network.",
+  "keywords": [
+    "bandwise",
+    "system-one",
+    "jev",
+    "typesafe",
+    "llm",
+    "classification",
+    "decisions"
+  ],
+  "homepage": "https://docs.bandwise.dev",
+  "bugs": {
+    "url": "https://github.com/glacer06/bandwise-kit/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glacer06/bandwise-kit.git",
+    "directory": "packages/system-one-client"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "@bandwise/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./fixture": {
+      "@bandwise/source": "./src/fixture/index.ts",
+      "types": "./dist/fixture/index.d.ts",
+      "import": "./dist/fixture/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "fixtures"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bandwise/core": "workspace:*",
+    "@typesafe-ai/sdk": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@bandwise/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "task",
+        "item"
+      ],
+      "properties": {
+        "task": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "item": {
+          "type": "object",
+          "required": [
+            "kind",
+            "content"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "tool_call",
+                "tool_result",
+                "message"
+              ]
+            },
+            "content": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "prune",
+      "questions": {
+        "still_matters": {
+          "type": "noul",
+          "instructions": "An agent is working on `task`. Would the agent need `item` in its context to finish that task correctly?",
+          "criteria": {
+            "true": "The item holds facts, decisions, file contents, errors or instructions the agent still needs for the task.",
+            "false": "The item is finished business: superseded output, a dead end already abandoned, or chatter with nothing the task depends on."
+          },
+          "meta": {
+            "label": "Still matters"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "still_matters": {
+      "type": "noul",
+      "gating": true,
+      "noul": {
+        "trueAt": 0.7,
+        "falseAt": 0.15,
+        "reviewMargin": 0.1
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "fallback",
+          "config": {
+            "kind": "value",
+            "value": true
+          }
+        },
+        "low": {
+          "kind": "fallback",
+          "config": {
+            "kind": "value",
+            "value": true
+          }
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "when": {
+        "q": "still_matters",
+        "eq": false
+      },
+      "output": "drop"
+    }
+  ],
+  "defaultRoute": "keep",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 20,
+    "kind": "context_pruned"
+  },
+  "onUnavailable": "review"
+}

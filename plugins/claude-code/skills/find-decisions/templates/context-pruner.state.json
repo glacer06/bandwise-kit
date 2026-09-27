@@ -1,0 +1,7 @@
+{
+  "task": "Fix the failing test in src/billing/invoice.test.ts without changing the public API.",
+  "item": {
+    "kind": "tool_result",
+    "content": "FAIL src/billing/invoice.test.ts > totals include tax. Expected 118.00, received 100.00."
+  }
+}

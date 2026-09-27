@@ -1,0 +1,38 @@
+{
+  "name": "alias-resolved",
+  "provider": "typesafe",
+  "openapiVersion": "0.2.0",
+  "requestId": "req_fx_alias",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "Charged twice",
+        "body": "Help! I was charged twice for my plan this month and I need a refund today."
+      }
+    },
+    "model": "jev-latest",
+    "questions": {
+      "is_urgent": {
+        "type": "noul",
+        "instructions": "Does `ticket` convey urgency?",
+        "criteria": {
+          "true": "Explicitly time-sensitive",
+          "false": "No urgency expressed"
+        }
+      }
+    }
+  },
+  "response": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "is_urgent": {
+        "type": "noul",
+        "noul": 0.95
+      }
+    },
+    "usage": {
+      "input_tokens": 84,
+      "output_tokens": 3
+    }
+  }
+}

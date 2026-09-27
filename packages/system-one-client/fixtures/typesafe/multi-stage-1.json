@@ -1,0 +1,42 @@
+{
+  "name": "multi-stage-1",
+  "provider": "typesafe",
+  "openapiVersion": "0.2.0",
+  "requestId": "req_fx_multi_1",
+  "request": {
+    "state": {
+      "ticket": "I was charged twice for my plan this month. Please refund one of the charges."
+    },
+    "model": "jev-1.13.0",
+    "questions": {
+      "team": {
+        "type": "choice",
+        "instructions": "Which support team should handle the customer message in `ticket`?",
+        "criteria": {
+          "billing": "Charges, invoices, refunds and payment methods.",
+          "technical": "Bugs, errors, outages and broken features.",
+          "none_of_these": null
+        }
+      }
+    }
+  },
+  "response": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "team": {
+        "type": "choice",
+        "choice": "billing",
+        "confidence": 0.86,
+        "probabilities": {
+          "billing": 0.91,
+          "technical": 0.03,
+          "none_of_these": 0.06
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 97,
+      "output_tokens": 5
+    }
+  }
+}

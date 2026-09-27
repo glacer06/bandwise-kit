@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": ["ticket"],
+      "properties": { "ticket": { "type": "string", "maxLength": 4000 } }
+    }
+  },
+  "stages": [
+    {
+      "id": "classify",
+      "questions": {
+        "team": {
+          "type": "choice",
+          "instructions": "Which support team should handle the customer message in `ticket`?",
+          "criteria": {
+            "billing": "Charges, invoices, refunds and payment methods.",
+            "technical": "Bugs, errors, outages and broken features.",
+            "none_of_these": null
+          },
+          "meta": { "label": "Team" }
+        }
+      }
+    },
+    {
+      "id": "billing_detail",
+      "when": { "q": "team", "eq": "billing" },
+      "stateFrom": { "merge": { "input": true, "answers": ["team"] } },
+      "questions": {
+        "refund": {
+          "type": "noul",
+          "instructions": "Given that the team is `answers.team.value`, does the customer in `ticket` ask for money back?",
+          "criteria": { "true": "The customer asks for a refund or a credit.", "false": "The customer asks for something else." },
+          "meta": { "label": "Refund requested" }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "team": {
+      "type": "choice",
+      "gating": true,
+      "thresholds": { "high": 0.75, "medium": 0.45 },
+      "actions": { "high": { "kind": "auto" }, "medium": { "kind": "review" }, "low": { "kind": "review" } }
+    },
+    "refund": {
+      "type": "noul",
+      "gating": true,
+      "noul": { "trueAt": 0.85, "falseAt": 0.15, "reviewMargin": 0.1 },
+      "actions": { "high": { "kind": "auto" }, "medium": { "kind": "review" }, "low": { "kind": "review" } }
+    }
+  },
+  "routes": [{ "when": { "q": "refund", "eq": true }, "output": "refund_queue" }],
+  "defaultRoute": "support_queue"
+}

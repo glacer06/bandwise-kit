@@ -1,0 +1,12 @@
+{
+  "extends": "@bandwise/config/tsconfig/library.json",
+  "include": [
+    "src",
+    "*.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/__fixtures__"
+  ]
+}

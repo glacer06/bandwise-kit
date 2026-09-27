@@ -1,0 +1,16 @@
+{
+  "issue": {
+    "title": "TypeError: Cannot read properties of undefined (reading 'rate')",
+    "culprit": "checkout/tax.ts in computeTax",
+    "stack": "at computeTax (checkout/tax.ts:41)\nat buildOrder (checkout/order.ts:88)\nat POST /api/checkout",
+    "url_path": "/checkout"
+  },
+  "release": {
+    "version": "2026.9.3",
+    "changes": [
+      "checkout: switch tax calculation to the new rates service",
+      "search: add typo tolerance",
+      "deps: bump the image resizing library"
+    ]
+  }
+}

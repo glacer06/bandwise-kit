@@ -1,0 +1,34 @@
+{
+  "name": "error-429",
+  "provider": "typesafe",
+  "openapiVersion": "0.2.0",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "error-429",
+        "body": "Fixture for HTTP 429."
+      }
+    },
+    "model": "jev-1.13.0",
+    "questions": {
+      "is_urgent": {
+        "type": "noul",
+        "instructions": "Does `ticket` convey urgency?",
+        "criteria": {
+          "true": "Explicitly time-sensitive",
+          "false": "No urgency expressed"
+        }
+      }
+    }
+  },
+  "error": {
+    "status": 429,
+    "body": {
+      "detail": "Rate limit exceeded"
+    },
+    "headers": {
+      "x-typesafe-request-id": "req_fx_429",
+      "retry-after": "2"
+    }
+  }
+}

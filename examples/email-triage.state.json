@@ -1,0 +1,12 @@
+{
+  "email": {
+    "from": "ana@example.com",
+    "subject": "Re: contract renewal",
+    "body": "Hi Sam, legal signed off on the renewal terms. I need your approval on the final contract by Friday so we can keep the current pricing. Can you confirm today?",
+    "signature": "Ana Ruiz, Head of Procurement, Acme, +1 555 0100"
+  },
+  "me": {
+    "name": "Sam",
+    "known_contacts": ["ana@example.com", "legal@example.com"]
+  }
+}

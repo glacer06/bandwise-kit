@@ -1,0 +1,23 @@
+{
+  "account": {
+    "company": "Northwind Analytics",
+    "plan": "trial",
+    "seats_invited": 7
+  },
+  "events": [
+    {
+      "name": "plan_limit_reached",
+      "detail": "projects"
+    },
+    {
+      "name": "pricing_page_viewed"
+    },
+    {
+      "name": "sso_settings_opened"
+    },
+    {
+      "name": "checkout_started",
+      "detail": "team plan"
+    }
+  ]
+}

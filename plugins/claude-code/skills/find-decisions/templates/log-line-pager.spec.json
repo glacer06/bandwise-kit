@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "log",
+        "service"
+      ],
+      "properties": {
+        "log": {
+          "type": "object",
+          "required": [
+            "level",
+            "message"
+          ],
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": [
+                "debug",
+                "info",
+                "warn",
+                "error",
+                "fatal",
+                "critical"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 4000
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "purpose": {
+              "type": "string"
+            }
+          }
+        },
+        "recent_lines": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20
+        }
+      }
+    }
+  },
+  "checks": [
+    {
+      "id": "fatal_level",
+      "when": {
+        "input": "log.level",
+        "in": [
+          "fatal",
+          "critical"
+        ]
+      }
+    }
+  ],
+  "stages": [
+    {
+      "id": "page",
+      "questions": {
+        "needs_human_now": {
+          "type": "noul",
+          "instructions": {
+            "question": "Does this log line show a problem that a person on call should look at right now, because users, data, or money are affected or soon will be?",
+            "log_line": "`log`",
+            "service_info": "`service`",
+            "recent_lines_for_context": "`recent_lines`"
+          },
+          "criteria": {
+            "true": "A real, current problem: failed payments, data loss, an outage, a security event, or errors users will see.",
+            "false": "Expected noise, a handled retry, a single transient failure, a deprecation notice, or a problem that can wait for working hours."
+          },
+          "meta": {
+            "label": "Needs a human now"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "needs_human_now": {
+      "type": "noul",
+      "gating": true,
+      "noul": {
+        "trueAt": 0.8,
+        "falseAt": 0.2,
+        "reviewMargin": 0.1
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "when": {
+        "any": [
+          {
+            "check": "fatal_level"
+          },
+          {
+            "q": "needs_human_now",
+            "eq": true
+          }
+        ]
+      },
+      "output": "page"
+    }
+  ],
+  "defaultRoute": "log_only",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 40,
+    "kind": "decision"
+  },
+  "onUnavailable": "review"
+}

@@ -1,0 +1,61 @@
+{
+  "name": "@bandwise/templates",
+  "version": "0.1.0",
+  "description": "The Bandwise template pack: question set specs with example states and a borderline case per question.",
+  "keywords": [
+    "bandwise",
+    "system-one",
+    "jev",
+    "typesafe",
+    "llm",
+    "classification",
+    "decisions"
+  ],
+  "homepage": "https://docs.bandwise.dev",
+  "bugs": {
+    "url": "https://github.com/glacer06/bandwise-kit/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glacer06/bandwise-kit.git",
+    "directory": "packages/templates"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "@bandwise/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.build.json",
+    "test": "vitest run",
+    "generate": "BANDWISE_WRITE_GENERATED=1 vitest run src/generated-files.test.ts"
+  },
+  "dependencies": {
+    "@bandwise/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@bandwise/cli": "workspace:*",
+    "@bandwise/config": "workspace:*",
+    "@bandwise/system-one-client": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "noul",
+  "provider": "openrouter",
+  "openapiVersion": "0.2.0",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "Charged twice",
+        "body": "Help! I was charged twice for my plan this month and I need a refund today."
+      }
+    },
+    "model": "typesafe/jev-1.13",
+    "questions": {
+      "is_urgent": {
+        "type": "noul",
+        "instructions": "Does `ticket` convey urgency?",
+        "criteria": {
+          "true": "Explicitly time-sensitive",
+          "false": "No urgency expressed"
+        }
+      }
+    }
+  },
+  "response": {
+    "id": "gen-dec-fx-noul",
+    "model": "typesafe/jev-1.13-20260917",
+    "provider": "TypeSafe",
+    "answers": {
+      "is_urgent": {
+        "type": "noul",
+        "noul": 0.96
+      }
+    },
+    "usage": {
+      "input_tokens": 84,
+      "output_tokens": 3,
+      "cost": 0.000003528
+    }
+  }
+}

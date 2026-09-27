@@ -1,0 +1,32 @@
+{
+  "name": "outage-503",
+  "provider": "vercel",
+  "openapiVersion": "0.2.0",
+  "source": "hand-authored",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "outage-503",
+        "body": "Fixture for a System One outage on Vercel AI Gateway (HTTP 503)."
+      }
+    },
+    "model": "typesafe-ai/jev",
+    "questions": {
+      "is_urgent": {
+        "type": "noul",
+        "instructions": "Does `ticket` convey urgency?",
+        "criteria": {
+          "true": "Explicitly time-sensitive",
+          "false": "No urgency expressed"
+        }
+      }
+    }
+  },
+  "error": {
+    "status": 503,
+    "body": {
+      "detail": "Service Unavailable"
+    },
+    "headers": {}
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "agent",
+        "event"
+      ],
+      "properties": {
+        "agent": {
+          "type": "object",
+          "required": [
+            "goal",
+            "waiting_for"
+          ],
+          "properties": {
+            "goal": {
+              "type": "string",
+              "maxLength": 1000
+            },
+            "waiting_for": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        },
+        "event": {
+          "type": "object",
+          "required": [
+            "source",
+            "content"
+          ],
+          "properties": {
+            "source": {
+              "type": "string"
+            },
+            "from": {
+              "type": "string"
+            },
+            "content": {
+              "type": "string",
+              "maxLength": 8000
+            }
+          }
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "gate",
+      "questions": {
+        "wake_decision": {
+          "type": "choice",
+          "instructions": {
+            "question": "An agent is asleep and waiting for something specific. Given this new event, what should happen to the agent?",
+            "agent_goal": "`agent.goal`",
+            "agent_waiting_for": "`agent.waiting_for`",
+            "new_event": "`event`"
+          },
+          "criteria": {
+            "wake": "The event is what the agent waits for, or it changes the agent's goal, so the agent should act now.",
+            "not_yet": "The event is about the agent's goal but is not the thing it waits for yet, such as progress or a partial answer.",
+            "unrelated": "The event has nothing to do with the agent's goal.",
+            "unclear": "The event could matter, but it does not give enough to tell."
+          },
+          "meta": {
+            "label": "Wake the agent"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "wake_decision": {
+      "type": "choice",
+      "gating": true,
+      "thresholds": {
+        "high": 0.7,
+        "medium": 0.4
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "fallback",
+          "config": {
+            "kind": "value",
+            "value": "wake"
+          }
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "when": {
+        "q": "wake_decision",
+        "eq": "wake"
+      },
+      "output": "wake"
+    },
+    {
+      "when": {
+        "q": "wake_decision",
+        "eq": "not_yet"
+      },
+      "output": "sleep"
+    },
+    {
+      "when": {
+        "q": "wake_decision",
+        "eq": "unrelated"
+      },
+      "output": "ignore"
+    }
+  ],
+  "defaultRoute": "wake",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 30,
+    "kind": "decision"
+  },
+  "onUnavailable": "review"
+}

@@ -1,0 +1,14 @@
+{
+  "log": {
+    "level": "error",
+    "message": "charge failed: provider returned 503 for 42 of the last 50 attempts"
+  },
+  "service": {
+    "name": "checkout-api",
+    "purpose": "Takes payments for orders."
+  },
+  "recent_lines": [
+    "charge failed: provider returned 503",
+    "charge failed: provider returned 503"
+  ]
+}

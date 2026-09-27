@@ -1,0 +1,43 @@
+{
+  "name": "noul",
+  "provider": "vercel",
+  "openapiVersion": "0.2.0",
+  "source": "doc-derived",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "Charged twice",
+        "body": "Help! I was charged twice for my plan this month and I need a refund today."
+      }
+    },
+    "model": "typesafe-ai/jev",
+    "questions": {
+      "refund": {
+        "type": "noul",
+        "instructions": "Is the customer who wrote `ticket` asking for a refund?",
+        "criteria": {
+          "true": "Asks for money back",
+          "false": "No refund request"
+        }
+      }
+    }
+  },
+  "response": {
+    "model": "typesafe-ai/jev",
+    "answers": {
+      "refund": {
+        "type": "noul",
+        "noul": 0.98
+      }
+    },
+    "usage": {
+      "input_tokens": 275,
+      "output_tokens": 20
+    },
+    "provider_metadata": {
+      "gateway": {
+        "cost": "0.00001155"
+      }
+    }
+  }
+}

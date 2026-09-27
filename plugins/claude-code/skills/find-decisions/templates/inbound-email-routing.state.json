@@ -1,0 +1,8 @@
+{
+  "email": {
+    "from": "ops@customer.example.com",
+    "to": "hello@yourco.example",
+    "subject": "Card declined, account locked",
+    "text": "Our card was declined this morning and now the whole team is locked out. We updated the card but it still says suspended. Please help, we have a client demo at 3pm."
+  }
+}

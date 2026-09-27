@@ -1,0 +1,271 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "pr"
+      ],
+      "properties": {
+        "pr": {
+          "type": "object",
+          "required": [
+            "title",
+            "files",
+            "diff",
+            "lines_changed"
+          ],
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "files": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "diff": {
+              "type": "string"
+            },
+            "lines_changed": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "checks": [
+    {
+      "id": "large_diff",
+      "when": {
+        "input": "pr.lines_changed",
+        "gte": 400
+      }
+    }
+  ],
+  "stages": [
+    {
+      "id": "risks",
+      "questions": {
+        "touches_sensitive_code": {
+          "type": "noul",
+          "instructions": "Does the change in `pr.diff` (files `pr.files`) modify authentication, authorization, billing, payments, secrets handling, or permission checks?",
+          "criteria": {
+            "true": "At least one changed line sits in code that decides who can do what, handles money, or handles credentials.",
+            "false": "The changed lines are outside those areas, such as copy, styling, docs, or unrelated features."
+          },
+          "meta": {
+            "label": "Touches sensitive code"
+          }
+        },
+        "tests_weakened": {
+          "type": "noul",
+          "instructions": "Does `pr.diff` delete tests, skip tests, loosen assertions, or lower a coverage or lint threshold?",
+          "criteria": {
+            "true": "Existing checks were removed, skipped, or made easier to pass.",
+            "false": "Tests were added, kept, or made stricter, or the change touches no tests."
+          },
+          "meta": {
+            "label": "Tests weakened"
+          }
+        },
+        "risky_migration": {
+          "type": "noul",
+          "instructions": "Does `pr.diff` include a database or schema migration that drops, renames, or rewrites existing columns, tables, or data?",
+          "criteria": {
+            "true": "A migration changes or removes existing data or structure in a way that is hard to undo.",
+            "false": "Migrations only add new tables, columns, or indexes, or the change has no migration."
+          },
+          "meta": {
+            "label": "Risky migration"
+          }
+        },
+        "mixed_concerns": {
+          "type": "noul",
+          "instructions": "Judged by `pr.title`, `pr.description` and `pr.diff`, does this pull request mix several unrelated changes that a reviewer would want split up?",
+          "criteria": {
+            "true": "Several unrelated changes are bundled, so a reviewer could miss one.",
+            "false": "The change has one clear purpose."
+          },
+          "meta": {
+            "label": "Mixes unrelated changes"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "touches_sensitive_code": {
+      "type": "noul",
+      "gating": true,
+      "noul": {
+        "trueAt": 0.8,
+        "falseAt": 0.2,
+        "reviewMargin": 0.1
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    },
+    "tests_weakened": {
+      "type": "noul",
+      "gating": true,
+      "noul": {
+        "trueAt": 0.8,
+        "falseAt": 0.2,
+        "reviewMargin": 0.1
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    },
+    "risky_migration": {
+      "type": "noul",
+      "gating": true,
+      "noul": {
+        "trueAt": 0.8,
+        "falseAt": 0.2,
+        "reviewMargin": 0.1
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    },
+    "mixed_concerns": {
+      "type": "noul",
+      "gating": true,
+      "noul": {
+        "trueAt": 0.8,
+        "falseAt": 0.2,
+        "reviewMargin": 0.1
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    }
+  },
+  "composites": [
+    {
+      "id": "risk",
+      "kind": "weighted",
+      "terms": [
+        {
+          "q": "touches_sensitive_code",
+          "weight": 0.3
+        },
+        {
+          "q": "tests_weakened",
+          "weight": 0.25
+        },
+        {
+          "q": "risky_migration",
+          "weight": 0.25
+        },
+        {
+          "q": "mixed_concerns",
+          "weight": 0.1
+        },
+        {
+          "check": "large_diff",
+          "weight": 0.1
+        }
+      ],
+      "policy": {
+        "type": "composite",
+        "gating": true,
+        "levelThresholds": {
+          "high": 0.5,
+          "medium": 0.2
+        },
+        "actions": {
+          "high": {
+            "kind": "review"
+          },
+          "medium": {
+            "kind": "review"
+          },
+          "low": {
+            "kind": "auto"
+          }
+        }
+      }
+    }
+  ],
+  "routes": [
+    {
+      "when": {
+        "any": [
+          {
+            "q": "touches_sensitive_code",
+            "eq": true
+          },
+          {
+            "q": "tests_weakened",
+            "eq": true
+          },
+          {
+            "q": "risky_migration",
+            "eq": true
+          },
+          {
+            "check": "large_diff"
+          }
+        ]
+      },
+      "output": "needs_human"
+    },
+    {
+      "when": {
+        "composite": "risk",
+        "gte": 0.2
+      },
+      "output": "needs_human"
+    }
+  ],
+  "defaultRoute": "auto_merge",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 60,
+    "kind": "decision"
+  },
+  "onUnavailable": "review"
+}

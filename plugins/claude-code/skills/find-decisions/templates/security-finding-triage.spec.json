@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "finding"
+      ],
+      "properties": {
+        "finding": {
+          "type": "object",
+          "required": [
+            "rule",
+            "message",
+            "file",
+            "context"
+          ],
+          "properties": {
+            "rule": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "file": {
+              "type": "string"
+            },
+            "context": {
+              "type": "string",
+              "maxLength": 12000
+            },
+            "service_exposure": {
+              "type": "string",
+              "enum": [
+                "internet",
+                "internal",
+                "offline"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "triage",
+      "questions": {
+        "reachable_from_user_input": {
+          "type": "noul",
+          "instructions": "Can data an outside user controls reach the flagged code in `finding` (rule `finding.rule` in `finding.file`), judged from the code and data flow in `finding.context`?",
+          "criteria": {
+            "true": "User-controlled data such as a request body, query, header, upload or message can flow to the flagged line.",
+            "false": "Only constants, trusted configuration, or internal values the user cannot influence reach the flagged line."
+          },
+          "meta": {
+            "label": "Reachable from user input"
+          }
+        },
+        "severity_in_context": {
+          "type": "score",
+          "instructions": "If an attacker could trigger `finding`, how much harm could it cause in this codebase, judged from `finding.context` and `finding.service_exposure`?",
+          "criteria": [
+            "Informational. No realistic harm.",
+            "Low. Limited information exposure or a nuisance.",
+            "High. Access to other users' data, or a way to disrupt the service.",
+            "Critical. Remote code execution, full data access, or account takeover."
+          ],
+          "meta": {
+            "label": "Severity in context"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "reachable_from_user_input": {
+      "type": "noul",
+      "gating": true,
+      "noul": {
+        "trueAt": 0.8,
+        "falseAt": 0.1,
+        "reviewMargin": 0.05
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    },
+    "severity_in_context": {
+      "type": "score",
+      "gating": false,
+      "thresholds": {
+        "high": 0.6,
+        "medium": 0.35
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "auto"
+        },
+        "low": {
+          "kind": "auto"
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "when": {
+        "all": [
+          {
+            "q": "reachable_from_user_input",
+            "eq": false
+          },
+          {
+            "q": "reachable_from_user_input",
+            "band": "high"
+          }
+        ]
+      },
+      "output": "auto_close"
+    }
+  ],
+  "defaultRoute": "review",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 60,
+    "kind": "decision"
+  },
+  "onUnavailable": "review"
+}

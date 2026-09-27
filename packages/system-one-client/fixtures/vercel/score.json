@@ -1,0 +1,55 @@
+{
+  "name": "score",
+  "provider": "vercel",
+  "openapiVersion": "0.2.0",
+  "source": "doc-derived",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "Charged twice",
+        "body": "Help! I was charged twice for my plan this month and I need a refund today."
+      }
+    },
+    "model": "typesafe-ai/jev",
+    "questions": {
+      "frustration": {
+        "type": "score",
+        "instructions": "How frustrated is the customer who wrote `ticket`?",
+        "criteria": [
+          "Calm",
+          "Frustrated",
+          "Very angry"
+        ]
+      }
+    }
+  },
+  "response": {
+    "model": "typesafe-ai/jev",
+    "answers": {
+      "frustration": {
+        "type": "score",
+        "score": 1.1,
+        "confidence": 0.6,
+        "legend": {
+          "0": "Calm",
+          "1": "Frustrated",
+          "2": "Very angry"
+        },
+        "probabilities": {
+          "0": 0.07,
+          "1": 0.76,
+          "2": 0.17
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 96,
+      "output_tokens": 5
+    },
+    "provider_metadata": {
+      "gateway": {
+        "cost": "0.000004032"
+      }
+    }
+  }
+}

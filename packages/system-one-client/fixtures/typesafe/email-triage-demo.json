@@ -1,0 +1,137 @@
+{
+  "name": "email-triage-demo",
+  "provider": "typesafe",
+  "openapiVersion": "0.2.0",
+  "requestId": "req_fx_email_triage",
+  "request": {
+    "state": {
+      "email": {
+        "from": "ana@example.com",
+        "subject": "Re: contract renewal",
+        "body": "Hi Sam, legal signed off on the renewal terms. I need your approval on the final contract by Friday so we can keep the current pricing. Can you confirm today?",
+        "signature": "[redacted]"
+      },
+      "me": {
+        "name": "Sam",
+        "known_contacts": [
+          "ana@example.com",
+          "legal@example.com"
+        ]
+      }
+    },
+    "model": "jev-1.13.0",
+    "questions": {
+      "real_person": {
+        "type": "noul",
+        "instructions": "Was `email` written by a real person to the recipient, rather than sent by an automated system, newsletter, or marketing tool?",
+        "criteria": {
+          "true": "A person wrote this message to the recipient.",
+          "false": "Automated, bulk, newsletter, receipt, or marketing mail."
+        }
+      },
+      "someone_waiting": {
+        "type": "noul",
+        "instructions": {
+          "question": "Is someone the recipient knows waiting on the recipient to reply or act?",
+          "recipient": "`me.name`",
+          "known_contacts": "`me.known_contacts`",
+          "email": "`email`"
+        },
+        "criteria": {
+          "true": "The sender or someone named is blocked on, or explicitly waiting for, the recipient.",
+          "false": "No one is waiting on the recipient."
+        }
+      },
+      "cost_of_ignoring": {
+        "type": "score",
+        "instructions": "What will it cost the recipient to ignore `email` for a week?",
+        "criteria": [
+          "Nothing. Safe to ignore.",
+          "Minor. A small delay or a mildly annoyed contact.",
+          "Real. A missed deadline, lost money, or a damaged relationship.",
+          "Severe. Legal, financial, or safety consequences."
+        ]
+      },
+      "category": {
+        "type": "choice",
+        "instructions": "What kind of message is `email`, judged by what the sender wants from the recipient?",
+        "criteria": {
+          "work_request": "Someone needs work, a decision, or information from the recipient.",
+          "scheduling": "Meeting times, invites, or calendar changes.",
+          "personal": "Friends or family.",
+          "newsletter": "Subscribed content or digests.",
+          "transactional": "Receipts, notifications, password resets.",
+          "none_of_these": null
+        }
+      },
+      "work_type": {
+        "type": "choice",
+        "instructions": "Assume `email` is a work request to the recipient. What does the sender need the recipient to do?",
+        "criteria": {
+          "decision": "Make or approve a decision.",
+          "information": "Send facts, an answer, or a document.",
+          "review": "Review or give feedback on something the sender made.",
+          "none_of_these": null
+        }
+      }
+    }
+  },
+  "response": {
+    "model": "jev-1.13.0",
+    "answers": {
+      "real_person": {
+        "type": "noul",
+        "noul": 0.97
+      },
+      "someone_waiting": {
+        "type": "noul",
+        "noul": 0.91
+      },
+      "cost_of_ignoring": {
+        "type": "score",
+        "score": 2.21,
+        "confidence": 0.78,
+        "legend": {
+          "0": "Nothing. Safe to ignore.",
+          "1": "Minor. A small delay or a mildly annoyed contact.",
+          "2": "Real. A missed deadline, lost money, or a damaged relationship.",
+          "3": "Severe. Legal, financial, or safety consequences."
+        },
+        "probabilities": {
+          "0": 0.01,
+          "1": 0.09,
+          "2": 0.58,
+          "3": 0.32
+        }
+      },
+      "category": {
+        "type": "choice",
+        "choice": "work_request",
+        "confidence": 0.84,
+        "probabilities": {
+          "work_request": 0.9,
+          "scheduling": 0.03,
+          "personal": 0.01,
+          "newsletter": 0.01,
+          "transactional": 0.01,
+          "none_of_these": 0.04
+        }
+      },
+      "work_type": {
+        "type": "choice",
+        "choice": "decision",
+        "confidence": 0.8,
+        "probabilities": {
+          "decision": 0.87,
+          "information": 0.07,
+          "review": 0.04,
+          "none_of_these": 0.02
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 612,
+      "output_tokens": 28
+    }
+  }
+}

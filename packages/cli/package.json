@@ -1,0 +1,62 @@
+{
+  "name": "@bandwise/cli",
+  "version": "0.1.0",
+  "description": "The bandwise command. `bandwise run --local` runs a question set spec on a state with no network and no key.",
+  "keywords": [
+    "bandwise",
+    "system-one",
+    "jev",
+    "typesafe",
+    "llm",
+    "classification",
+    "decisions"
+  ],
+  "homepage": "https://docs.bandwise.dev",
+  "bugs": {
+    "url": "https://github.com/glacer06/bandwise-kit/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glacer06/bandwise-kit.git",
+    "directory": "packages/cli"
+  },
+  "type": "module",
+  "bin": {
+    "bandwise": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "@bandwise/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bandwise/core": "workspace:*",
+    "@bandwise/system-one-client": "workspace:*"
+  },
+  "devDependencies": {
+    "@bandwise/config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

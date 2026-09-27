@@ -1,0 +1,50 @@
+{
+  "name": "evaluation-fallback",
+  "provider": "vercel",
+  "openapiVersion": "0.2.0",
+  "source": "doc-derived",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "Wrong charge?",
+        "body": "Not sure if this is a billing thing or a bug, the app showed two payments."
+      }
+    },
+    "model": "typesafe-ai/jev",
+    "questions": {
+      "department": {
+        "type": "choice",
+        "instructions": "Which team should handle `ticket`?",
+        "criteria": {
+          "billing": "Payments, refunds",
+          "technical": "Bugs, outages",
+          "account": "Login and profile",
+          "none_of_these": null
+        }
+      }
+    }
+  },
+  "responseHeaders": {
+    "x-ai-gateway-evaluation-fallback-triggered": "true"
+  },
+  "response": {
+    "model": "anthropic/claude-sonnet-4.5",
+    "answers": {
+      "department": {
+        "type": "choice",
+        "choice": "billing",
+        "confidence": 0,
+        "probabilities": {}
+      }
+    },
+    "usage": {
+      "input_tokens": 118,
+      "output_tokens": 6
+    },
+    "provider_metadata": {
+      "gateway": {
+        "cost": "0.000412"
+      }
+    }
+  }
+}

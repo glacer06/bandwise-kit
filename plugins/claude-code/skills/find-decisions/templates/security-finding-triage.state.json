@@ -1,0 +1,9 @@
+{
+  "finding": {
+    "rule": "sql-injection",
+    "message": "Query built with string concatenation.",
+    "file": "src/routes/search.ts",
+    "context": "router.get('/search', (req, res) => {\n  const q = req.query.q;\n  db.query(\"SELECT * FROM items WHERE name LIKE '%\" + q + \"%'\");\n});",
+    "service_exposure": "internet"
+  }
+}

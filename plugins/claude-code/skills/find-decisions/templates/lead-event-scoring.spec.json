@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "account",
+        "events"
+      ],
+      "properties": {
+        "account": {
+          "type": "object",
+          "required": [
+            "plan"
+          ],
+          "properties": {
+            "company": {
+              "type": "string"
+            },
+            "plan": {
+              "type": "string",
+              "enum": [
+                "free",
+                "trial",
+                "paid"
+              ]
+            },
+            "seats_invited": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "events": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "score",
+      "questions": {
+        "buying_intent": {
+          "type": "score",
+          "instructions": "How strongly do the recent product `events` of this `account` show that it intends to buy or upgrade?",
+          "criteria": [
+            "None. Casual or one-off use.",
+            "Exploring. Trying features, no sign of a team or a budget.",
+            "Evaluating. Several people involved, or they looked at pricing, security or limits.",
+            "Ready. Clear buying signals such as hitting plan limits, asking for a quote, or starting checkout."
+          ],
+          "meta": {
+            "label": "Buying intent"
+          }
+        },
+        "next_action": {
+          "type": "choice",
+          "instructions": "Given the recent product `events` of this `account`, which sales action fits best right now?",
+          "criteria": {
+            "sales_call": "The account shows strong intent and would benefit from talking to a person now.",
+            "send_docs": "The account is evaluating and has a specific open question, such as security, pricing or limits.",
+            "nurture_email": "The account is active but early. A helpful email keeps it moving.",
+            "none_needed": "Nothing in the events calls for outreach yet."
+          },
+          "meta": {
+            "label": "Next action"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "buying_intent": {
+      "type": "score",
+      "gating": false,
+      "thresholds": {
+        "high": 0.6,
+        "medium": 0.35
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "auto"
+        },
+        "low": {
+          "kind": "auto"
+        }
+      }
+    },
+    "next_action": {
+      "type": "choice",
+      "gating": true,
+      "thresholds": {
+        "high": 0.6,
+        "medium": 0.35
+      },
+      "perOption": {
+        "sales_call": {
+          "high": 0.7,
+          "medium": 0.45
+        }
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "fallback",
+          "config": {
+            "kind": "value",
+            "value": "none_needed"
+          }
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "when": {
+        "q": "next_action",
+        "eq": "sales_call"
+      },
+      "output": "sales_call"
+    },
+    {
+      "when": {
+        "q": "next_action",
+        "eq": "send_docs"
+      },
+      "output": "send_docs"
+    },
+    {
+      "when": {
+        "q": "next_action",
+        "eq": "nurture_email"
+      },
+      "output": "nurture_email"
+    }
+  ],
+  "defaultRoute": "no_action",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 60,
+    "kind": "decision"
+  },
+  "onUnavailable": "review"
+}

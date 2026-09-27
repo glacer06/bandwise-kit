@@ -1,0 +1,49 @@
+{
+  "name": "choice",
+  "provider": "openrouter",
+  "openapiVersion": "0.2.0",
+  "request": {
+    "state": {
+      "ticket": {
+        "subject": "Charged twice",
+        "body": "Help! I was charged twice for my plan this month and I need a refund today."
+      }
+    },
+    "model": "typesafe/jev-1.13",
+    "questions": {
+      "department": {
+        "type": "choice",
+        "instructions": "Which team should handle `ticket`?",
+        "criteria": {
+          "billing": "Payments, refunds",
+          "technical": "Bugs, outages",
+          "account": "Login and profile",
+          "none_of_these": null
+        }
+      }
+    }
+  },
+  "response": {
+    "id": "gen-dec-fx-choice",
+    "model": "typesafe/jev-1.13-20260917",
+    "provider": "TypeSafe",
+    "answers": {
+      "department": {
+        "type": "choice",
+        "choice": "billing",
+        "confidence": 0.8,
+        "probabilities": {
+          "billing": 0.87,
+          "technical": 0.05,
+          "account": 0.05,
+          "none_of_these": 0.03
+        }
+      }
+    },
+    "usage": {
+      "input_tokens": 112,
+      "output_tokens": 6,
+      "cost": 0.000004704
+    }
+  }
+}

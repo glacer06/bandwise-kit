@@ -1,0 +1,144 @@
+{
+  "runId": "01923f4e-7b2a-7c3d-8e4f-5a6b7c8d9e0f",
+  "setId": "01923f40-1111-7aaa-9bbb-000000000001",
+  "version": 7,
+  "versionId": "01923f40-2222-7aaa-9bbb-000000000007",
+  "interfaceMajor": 2,
+  "interfaceHash": "sha256:4f1c9a7e0b3d",
+  "channel": "production",
+  "rollout": "full",
+  "status": "ok",
+  "modelRequested": "jev-1.13.0",
+  "modelResolved": "jev-1.13.0",
+  "typesafeRequestId": "req_01J9Z3QK4T",
+  "stages": [
+    {
+      "id": "triage",
+      "skipped": false,
+      "calls": [
+        {
+          "modelResolved": "jev-1.13.0",
+          "typesafeRequestId": "req_01J9Z3QK4T",
+          "inputTokens": 318,
+          "outputTokens": 0,
+          "latencyMs": 412
+        }
+      ]
+    }
+  ],
+  "checks": {},
+  "answers": {
+    "real_person": { "type": "noul", "noul": 0.97 },
+    "someone_waiting": { "type": "noul", "noul": 0.81 },
+    "cost_of_ignoring": {
+      "type": "score",
+      "score": 2.1,
+      "legend": {
+        "0": "Nothing. Safe to ignore.",
+        "1": "Minor. A small delay or a mildly annoyed contact.",
+        "2": "Real. A missed deadline, lost money, or a damaged relationship.",
+        "3": "Severe. Legal, financial, or safety consequences."
+      },
+      "probabilities": { "0": 0.01, "1": 0.07, "2": 0.73, "3": 0.19 },
+      "confidence": 0.84
+    },
+    "category": {
+      "type": "choice",
+      "choice": "work_request",
+      "probabilities": {
+        "work_request": 0.93,
+        "scheduling": 0.03,
+        "personal": 0.01,
+        "newsletter": 0.01,
+        "none_of_these": 0.02
+      },
+      "confidence": 0.9
+    },
+    "work_type": {
+      "type": "choice",
+      "choice": "decision",
+      "probabilities": { "decision": 0.71, "information": 0.2, "review": 0.07, "none_of_these": 0.02 },
+      "confidence": 0.62
+    }
+  },
+  "decisions": {
+    "real_person": {
+      "kind": "question",
+      "value": true,
+      "band": "high",
+      "relevant": true,
+      "action": "auto",
+      "effectiveAction": "auto",
+      "executed": true
+    },
+    "someone_waiting": {
+      "kind": "question",
+      "value": true,
+      "band": "medium",
+      "relevant": true,
+      "action": "review",
+      "effectiveAction": "review",
+      "executed": true
+    },
+    "cost_of_ignoring": {
+      "kind": "question",
+      "value": 2.1,
+      "band": "high",
+      "relevant": true,
+      "action": "auto",
+      "effectiveAction": "auto",
+      "executed": true
+    },
+    "category": {
+      "kind": "question",
+      "value": "work_request",
+      "band": "high",
+      "relevant": true,
+      "action": "auto",
+      "effectiveAction": "auto",
+      "executed": true
+    },
+    "work_type": {
+      "kind": "question",
+      "value": "decision",
+      "band": "medium",
+      "relevant": true,
+      "action": "review",
+      "effectiveAction": "review",
+      "executed": true
+    },
+    "urgency": {
+      "kind": "composite",
+      "value": 0.806,
+      "band": "medium",
+      "level": "high",
+      "relevant": true,
+      "action": "auto",
+      "effectiveAction": "auto",
+      "executed": true
+    }
+  },
+  "runBand": "medium",
+  "overallAction": "review",
+  "route": "urgent",
+  "cost": {
+    "systemOneInputTokens": 318,
+    "systemOneOutputTokens": 0,
+    "systemOneCostUsd": 0.000013,
+    "counterfactualInputTokens": 318,
+    "counterfactualOutputTokens": 180,
+    "counterfactualLlmCostUsd": 0.001218,
+    "comparatorModel": "claude-haiku-4-5",
+    "counterfactualMode": "one_call",
+    "savingsUsd": 0.001205,
+    "savingsKind": "decision",
+    "savingsSuppressed": null,
+    "llmCallsAvoided": 1,
+    "escalationCostUsd": 0,
+    "llmCallsMade": 0,
+    "estimated": true,
+    "latencyMs": 431
+  },
+  "reviewItemIds": ["01923f4e-7b2b-7c3d-8e4f-5a6b7c8d9e10", "01923f4e-7b2b-7c3d-8e4f-5a6b7c8d9e11"],
+  "warnings": []
+}

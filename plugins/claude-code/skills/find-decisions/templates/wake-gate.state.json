@@ -1,0 +1,11 @@
+{
+  "agent": {
+    "goal": "Ship the v2 billing export once finance approves the column list.",
+    "waiting_for": "Finance approval of the export columns, from anyone on the finance team."
+  },
+  "event": {
+    "source": "chat",
+    "from": "priya (finance)",
+    "content": "Columns look good to me, approved. Go ahead with the export."
+  }
+}

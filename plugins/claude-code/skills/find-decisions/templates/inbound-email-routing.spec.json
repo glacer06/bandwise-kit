@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "object",
+          "required": [
+            "from",
+            "to",
+            "subject",
+            "text"
+          ],
+          "properties": {
+            "from": {
+              "type": "string"
+            },
+            "to": {
+              "type": "string"
+            },
+            "subject": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 20000
+            }
+          }
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "route",
+      "questions": {
+        "queue": {
+          "type": "choice",
+          "instructions": "Which team should handle `email`, judged by what the sender wants? It arrived at the shared address `email.to`.",
+          "criteria": {
+            "support": "A customer needs help using the product or reports something broken.",
+            "billing": "Invoices, refunds, payment failures, plan changes or cancellations.",
+            "sales": "A prospect asks about buying, pricing, a demo or a quote.",
+            "partnerships": "Integrations, resellers, co-marketing or vendor pitches.",
+            "security_report": "Someone reports a vulnerability or a security concern in the product.",
+            "spam_or_automated": "Spam, bulk mail, auto-replies, bounces or notifications.",
+            "none_of_these": null
+          },
+          "meta": {
+            "label": "Queue"
+          }
+        },
+        "needs_reply_today": {
+          "type": "noul",
+          "instructions": "If `email` is from a person who wants something, does that person need a human reply today to avoid real harm or a lost customer?",
+          "criteria": {
+            "true": "Delay would cost something today: an outage, a blocked customer, a payment problem, a deadline or an angry escalation.",
+            "false": "A reply within a few working days is fine."
+          },
+          "meta": {
+            "label": "Needs a human reply today"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "queue": {
+      "type": "choice",
+      "gating": true,
+      "thresholds": {
+        "high": 0.6,
+        "medium": 0.35
+      },
+      "perOption": {
+        "security_report": {
+          "high": 0.8,
+          "medium": 0.5
+        }
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    },
+    "needs_reply_today": {
+      "type": "noul",
+      "gating": true,
+      "relevantWhen": {
+        "q": "queue",
+        "neq": "spam_or_automated"
+      },
+      "noul": {
+        "trueAt": 0.75,
+        "falseAt": 0.25,
+        "reviewMargin": 0.1
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "when": {
+        "q": "queue",
+        "eq": "support"
+      },
+      "output": "support"
+    },
+    {
+      "when": {
+        "q": "queue",
+        "eq": "billing"
+      },
+      "output": "billing"
+    },
+    {
+      "when": {
+        "q": "queue",
+        "eq": "sales"
+      },
+      "output": "sales"
+    },
+    {
+      "when": {
+        "q": "queue",
+        "eq": "partnerships"
+      },
+      "output": "partnerships"
+    },
+    {
+      "when": {
+        "q": "queue",
+        "eq": "security_report"
+      },
+      "output": "security"
+    },
+    {
+      "when": {
+        "q": "queue",
+        "eq": "spam_or_automated"
+      },
+      "output": "archive"
+    }
+  ],
+  "defaultRoute": "triage_by_hand",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 60,
+    "kind": "decision"
+  },
+  "onUnavailable": "review"
+}
