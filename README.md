@@ -22,7 +22,7 @@ cd bandwise-kit
 npx @bandwise/cli run --local examples/email-triage.spec.json examples/email-triage.state.json
 ```
 
-Until the first release is on npm, build from source instead:
+To work on the kit itself, build from source instead:
 
 ```sh
 pnpm install && pnpm -r build
