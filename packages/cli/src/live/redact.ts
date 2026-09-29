@@ -1,7 +1,8 @@
 // Redaction for what a hook sends to System One. Hook state is Claude Code's own input:
 // prompts, commands and file contents, which can carry secrets. Only the fields the spec's input
 // schema names are sent, strings are cut to the schema's maxLength, and secret-shaped text is
-// replaced before the call.
+// replaced before the call. Pattern redaction is best effort: it cannot promise that every private
+// value is gone, so `--drop <field>` exists for fields that must never leave the machine.
 
 const SECRET_PATTERNS: readonly RegExp[] = [
   /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g,
@@ -12,8 +13,27 @@ const SECRET_PATTERNS: readonly RegExp[] = [
   /\bxox[abprs]-[A-Za-z0-9-]{10,}/g,
   /\bAKIA[0-9A-Z]{16}\b/g,
   /\bBearer\s+[A-Za-z0-9._~+/=-]{8,}/gi,
-  // NAME=value where the name says it is secret: API_KEY=..., password: ...
-  /\b([A-Za-z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL)[A-Za-z0-9_]*)(\s*[=:]\s*)("[^"]*"|'[^']*'|[^\s"']+)/gi,
+];
+
+/** A name that says its value is secret: apiKey, API_KEY, client-secret, db_password, auth_token. */
+const SECRET_NAME = "[A-Za-z0-9_-]*(?:key|token|secret|password|passwd|pwd|credential)[A-Za-z0-9_-]*";
+
+/**
+ * Secrets whose value follows a name or a scheme. Each keeps the name and replaces only the value,
+ * so the model still sees what kind of thing was there. Short values count: length is no signal.
+ */
+const NAMED_SECRETS: ReadonlyArray<{ re: RegExp; keep: (m: RegExpExecArray) => string }> = [
+  // Any Authorization header, whatever the scheme: Basic, Digest, Token, Bearer.
+  { re: /\b((?:Proxy-)?Authorization\s*:\s*)[^\r\n'"]+/gi, keep: (m) => `${m[1] ?? ""}[redacted]` },
+  // Userinfo in a URL: scheme://user:password@host keeps the user and the host.
+  { re: /([a-z][a-z0-9+.-]*:\/\/[^\s:/@]+:)[^\s@/]+(@)/gi, keep: (m) => `${m[1] ?? ""}[redacted]${m[2] ?? ""}` },
+  // Command line flags: --api-key VALUE, --password=VALUE, -p VALUE after a password flag name.
+  { re: new RegExp(`(--?${SECRET_NAME})(\\s+|=)(?!-)("[^"]*"|'[^']*'|\\S+)`, "gi"), keep: (m) => `${m[1] ?? ""}${m[2] ?? ""}[redacted]` },
+  // name: value and name=value, in env files, YAML, JSON and code, with the name quoted or not.
+  {
+    re: new RegExp(`(["']?\\b${SECRET_NAME}["']?)(\\s*[=:]\\s*)("[^"]*"|'[^']*'|[^\\s,;"'}\\]]+)`, "gi"),
+    keep: (m) => `${m[1] ?? ""}${m[2] ?? ""}[redacted]`,
+  },
 ];
 
 /** Long opaque tokens with letters and digits mixed. Plain hex (commit ids, hashes) is kept. */
@@ -22,8 +42,10 @@ const OPAQUE = /\b[A-Za-z0-9_-]{32,}\b/g;
 /** Replace secret-shaped text with [redacted]. */
 export function redactSecrets(text: string): string {
   let out = text;
-  for (const re of SECRET_PATTERNS) {
-    out = out.replace(re, (match: string, name?: string, sep?: string) => (typeof name === "string" && typeof sep === "string" ? `${name}${sep}[redacted]` : "[redacted]"));
+  for (const re of SECRET_PATTERNS) out = out.replace(re, "[redacted]");
+  for (const { re, keep } of NAMED_SECRETS) {
+    // A replacer gets (match, group 1, group 2, ..., offset, input): the same order as a match.
+    out = out.replace(re, (...args: unknown[]) => keep(args as unknown as RegExpExecArray));
   }
   return out.replace(OPAQUE, (m) => (/^[0-9a-f]+$/i.test(m) || !/[0-9]/.test(m) || !/[A-Za-z]/.test(m) ? m : "[redacted]"));
 }

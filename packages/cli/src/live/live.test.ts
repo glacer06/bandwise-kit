@@ -161,6 +161,25 @@ describe("redaction and state shaping", () => {
     expect(out).toContain("OPENAI_API_KEY=[redacted]");
   });
 
+  it("replaces short secrets in JSON fields, auth headers, CLI flags and URLs", () => {
+    // Connection strings are assembled at run time, so no literal credential URL sits in the source.
+    const pg = (password: string): string => ["postgres", "://app:", password, "@db:5432/app"].join("");
+    const cases: Array<[string, string]> = [
+      ['{"apiKey": "abc123"}', "abc123"],
+      ["{'client_secret': 'tiny'}", "tiny"],
+      ["api-token: zz9", "zz9"],
+      ["Authorization: Basic dXNlcjpwYXNz", "dXNlcjpwYXNz"],
+      ["-H 'Proxy-Authorization: Digest a1b2'", "a1b2"],
+      ["curl --api-key s3cr3t https://example.com", "s3cr3t"],
+      ["tool -p hunter2 --password hunter3", "hunter3"],
+      [`psql ${pg("hunter2")}`, "hunter2"],
+      ["https://user:pa55@example.com/x", "pa55"],
+    ];
+    for (const [text, secret] of cases) expect(redactSecrets(text), text).not.toContain(secret);
+    expect(redactSecrets("curl --api-key s3cr3t https://example.com")).toBe("curl --api-key [redacted] https://example.com");
+    expect(redactSecrets(`psql ${pg("hunter2")}`)).toBe(`psql ${pg("[redacted]")}`);
+  });
+
   it("keeps commit ids and ordinary words", () => {
     const sha = "9b8be065afb60ec56bb262b7488f9dc7de853925";
     expect(redactSecrets(`git show ${sha}`)).toBe(`git show ${sha}`);
@@ -279,6 +298,17 @@ describe("bandwise hook", () => {
     expect(await runHook(cmd(), { ...deps, stdin: async () => "not json" })).toEqual({ exitCode: 0, stdout: "" });
     expect(await runHook(cmd({ setPath: "/nope.json" }), { ...deps, stdin: async () => forcePush })).toEqual({ exitCode: 0, stdout: "" });
     expect(await runHook(cmd({ rollout: "full" }), { ...deps, stdin: async () => forcePush })).toEqual({ exitCode: 0, stdout: "" });
+  });
+
+  it("exits 0 with no output when the live module cannot load", async () => {
+    const out = await main(["hook", "Stop", "--set", join(SETS, "done-check.json")], {
+      env: ENV,
+      stdin: async () => "{}",
+      loadLive: async () => {
+        throw new Error("Cannot find module '@typesafe-ai/sdk'");
+      },
+    });
+    expect(out).toEqual({ exitCode: 0, stdout: "", stderr: "" });
   });
 
   it("a bad hook command line exits 0 with no output", async () => {

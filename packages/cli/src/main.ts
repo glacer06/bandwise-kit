@@ -5,6 +5,7 @@
 
 import { formatReport, buildReport, defaultReceiptsPath, parseSince, readReceipts } from "./receipts/index.js";
 import { planHooksFromDir } from "./hooks-install.js";
+import type * as LiveModule from "./live/index.js";
 
 export interface CommandOutput {
   exitCode: number;
@@ -192,14 +193,18 @@ export interface MainIo {
   now?: () => number;
   /** Tests pass a fetch so live mode sends nothing. */
   fetch?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+  /** Loads live mode. Tests replace it to prove a failed load stays silent in a hook. */
+  loadLive?: () => Promise<typeof LiveModule>;
 }
+
+const SILENT_HOOK: CommandOutput = { exitCode: 0, stdout: "", stderr: "" };
 
 /** Run the CLI for argv and return what to print and the exit code. */
 export async function main(argv: readonly string[], io: MainIo = {}): Promise<CommandOutput> {
   const parsed = parseArgs(argv);
   if (parsed.kind === "help") return { exitCode: 0, stdout: USAGE, stderr: "" };
   // A hook never fails a session, not even on a bad command line.
-  if (parsed.kind === "error") return argv[0] === "hook" ? { exitCode: 0, stdout: "", stderr: "" } : { exitCode: 1, stdout: "", stderr: `${parsed.message}\n\n${USAGE}` };
+  if (parsed.kind === "error") return argv[0] === "hook" ? SILENT_HOOK : { exitCode: 1, stdout: "", stderr: `${parsed.message}\n\n${USAGE}` };
 
   if (parsed.kind === "report") {
     const path = parsed.receiptsPath ?? defaultReceiptsPath();
@@ -232,18 +237,26 @@ export async function main(argv: readonly string[], io: MainIo = {}): Promise<Co
   }
 
   // Live mode is the only path that loads the SDK transport.
-  const live = await import("./live/index.js");
-  if (parsed.kind === "run-live") {
-    const { kind: _kind, ...cmd } = parsed;
-    const liveIo: Parameters<typeof live.runLiveCommand>[1] = {};
-    if (io.env !== undefined) liveIo.env = io.env;
-    if (io.fetch !== undefined) liveIo.fetch = io.fetch;
-    return live.runLiveCommand(cmd, liveIo);
+  const loadLive = io.loadLive ?? (() => import("./live/index.js"));
+  if (parsed.kind === "hook") {
+    // A hook never fails a session: a live module that cannot load (a missing SDK dependency,
+    // a broken install) ends like any other hook error, with exit 0 and no output.
+    try {
+      const live = await loadLive();
+      const { kind: _kind, receiptsPath, ...hook } = parsed;
+      const hookIo: Parameters<typeof live.runHookCommand>[1] = { stdin: io.stdin ?? (async () => "") };
+      if (io.env !== undefined) hookIo.env = io.env;
+      if (io.now !== undefined) hookIo.now = io.now;
+      if (io.fetch !== undefined) hookIo.fetch = io.fetch;
+      return await live.runHookCommand({ ...hook, receiptsPath: receiptsPath ?? defaultReceiptsPath() }, hookIo);
+    } catch {
+      return SILENT_HOOK;
+    }
   }
-  const { kind: _kind, receiptsPath, ...hook } = parsed;
-  const hookIo: Parameters<typeof live.runHookCommand>[1] = { stdin: io.stdin ?? (async () => "") };
-  if (io.env !== undefined) hookIo.env = io.env;
-  if (io.now !== undefined) hookIo.now = io.now;
-  if (io.fetch !== undefined) hookIo.fetch = io.fetch;
-  return live.runHookCommand({ ...hook, receiptsPath: receiptsPath ?? defaultReceiptsPath() }, hookIo);
+  const live = await loadLive();
+  const { kind: _kind, ...cmd } = parsed;
+  const liveIo: Parameters<typeof live.runLiveCommand>[1] = {};
+  if (io.env !== undefined) liveIo.env = io.env;
+  if (io.fetch !== undefined) liveIo.fetch = io.fetch;
+  return live.runLiveCommand(cmd, liveIo);
 }

@@ -1,6 +1,6 @@
 {
   "name": "@bandwise/templates",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The Bandwise template pack: question set specs with example states and a borderline case per question.",
   "keywords": [
     "bandwise",

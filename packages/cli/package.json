@@ -1,6 +1,6 @@
 {
   "name": "@bandwise/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The bandwise command. `bandwise run --local` runs a question set spec on a state with no network and no key; `bandwise run --live` and `bandwise hook` run it against the real model with your own key.",
   "keywords": [
     "bandwise",
