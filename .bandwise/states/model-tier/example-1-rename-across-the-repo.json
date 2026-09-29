@@ -1,0 +1,3 @@
+{
+  "prompt": "Rename the function getUserName to getDisplayName everywhere, including the tests. No other changes."
+}

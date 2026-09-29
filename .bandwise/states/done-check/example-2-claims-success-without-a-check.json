@@ -1,0 +1,4 @@
+{
+  "request": "The CSV export drops the last row. Fix it and make sure the export tests pass.",
+  "last_reply": "I found the off-by-one in exportRows: the loop stopped at length - 1. I changed it to loop over every row. This should fix the missing last row and the export tests should pass now."
+}

@@ -1,0 +1,6 @@
+{
+  "tool": "Write",
+  "file_path": "packages/db/migrations/0031_rename_user_id.sql",
+  "content_preview": "ALTER TABLE orders RENAME COLUMN user_id TO account_id;",
+  "description": "Rename the column to match the new model"
+}

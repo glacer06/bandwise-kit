@@ -43,6 +43,28 @@ npx @bandwise/cli run --local \
 
 Other options: `--provider typesafe|openrouter|vercel`, `--rollout shadow|controlled|full|paused` and `--channel production|staging`. Run `npx @bandwise/cli --help` for the full usage.
 
+## Run live with your own key
+
+`--live` runs the same spec against the real model. The key comes only from your environment: `TYPESAFE_API_KEY`, or `OPENROUTER_API_KEY` or `AI_GATEWAY_API_KEY` with `--provider openrouter` or `--provider vercel`. The CLI never reads a key from a flag, a spec or a file, never prints it, and sends it only to the provider's own API.
+
+```sh
+export TYPESAFE_API_KEY=...   # your own key
+npx @bandwise/cli run --live examples/email-triage.spec.json examples/email-triage.state.json --receipts
+npx @bandwise/cli report --since 7d
+```
+
+`--receipts` appends one line per run to `~/.bandwise/receipts.jsonl`: the set, the spec hash, each decision's value, band and action, the System One cost, the counterfactual LLM cost and the latency. Never the state. `bandwise report` sums them per set. Savings are estimates: the counterfactual prices one comparator LLM call per decision.
+
+## Claude Code hooks
+
+The agent pack runs as Claude Code hooks: `done-check` on `Stop`, `action-risk-gate` on `PreToolUse` and `model-tier` on `UserPromptSubmit`. The specs and example states are in `.bandwise/`.
+
+```sh
+npx @bandwise/cli hooks install --sets-dir .bandwise/sets --command "npx @bandwise/cli"
+```
+
+That prints the entries for `.claude/settings.json` and writes nothing. Every entry starts with `--rollout shadow`: the hook runs, writes a receipt and never blocks, denies or adds context. Change one entry to `--rollout controlled` after reading its receipts, and only a high band answer acts. A hook sends only the fields the set's input schema names, with secret-shaped text redacted. Any error, a missing key or a 3 second timeout ends the hook with exit 0 and no output, so it never breaks a session.
+
 ## How a question set works
 
 A question set is one JSON spec. It names the model, describes the input state with a JSON Schema, asks questions in one or more stages, and sets a policy for every question. Later stages can read earlier answers. Routes turn the answers into one output your app branches on, such as `urgent` or `read_later`.
@@ -76,7 +98,7 @@ Confidence is the spread of the model's answer, not the chance of being right. T
 
 ## Templates
 
-The template pack (`@bandwise/templates`) ships 9 specs. Each has two or three example states and one borderline case per question. The same specs, with one example state each, sit in `plugins/claude-code/skills/find-decisions/templates/`.
+The template pack (`@bandwise/templates`) ships 12 specs. Each has two or three example states and one borderline case per question. The same specs, with one example state each, sit in `plugins/claude-code/skills/find-decisions/templates/`.
 
 | Template | What it decides | Questions |
 |---|---|---|
@@ -85,6 +107,9 @@ The template pack (`@bandwise/templates`) ships 9 specs. Each has two or three e
 | `log-line-pager` | Decide whether one log line needs a human now, so only real problems page someone. | `needs_human_now` |
 | `context-pruner` | Decide, item by item, whether an agent's context item still matters for the current task, and drop the rest unchanged. | `still_matters` |
 | `wake-gate` | Decide whether an event should wake a sleeping agent now, later, or not at all. | `wake_decision` |
+| `done-check` | Decide whether a coding agent has really finished the request before it stops, or has work left or an unchecked claim. | `turn_outcome` |
+| `action-risk-gate` | Decide whether a coding agent's shell command or file edit is risky enough that a person should confirm it before it runs. | `risky_command`, `risky_file_change`, `risk_kind` |
+| `model-tier` | Decide how hard a new request to a coding agent is, so mechanical work can go to a cheaper model or subagent. | `difficulty`, `high_stakes` |
 | `security-finding-triage` | Decide whether a static analysis finding is reachable from user input, and how bad it is in context. | `reachable_from_user_input`, `severity_in_context` |
 | `error-triage` | Decide which team owns a new error tracker issue, how much it hurts users, and whether the latest release caused it. | `owning_team`, `user_impact`, `new_regression` |
 | `lead-event-scoring` | Score how ready an account is to buy from its recent product events, and pick the next sales action. | `buying_intent`, `next_action` |

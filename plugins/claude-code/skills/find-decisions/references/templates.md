@@ -64,6 +64,42 @@ Wake gate. Decide whether an event should wake a sleeping agent now, later, or n
 - Not when: The agent waits for one exact signal, such as a webhook with a known id or a status field changing. Match it in code. Deciding needs the agent's full history and planning. Wake the agent and let it decide.
 - Files: `templates/wake-gate.spec.json`, `templates/wake-gate.state.json`
 
+## done-check
+
+Done check. Decide whether a coding agent has really finished the request before it stops, or has work left or an unchecked claim.
+
+- Pattern: `confidence_routing`
+- Questions: `turn_outcome` (choice)
+- State: `request`, `last_reply`
+- Routes: `continue`, `stop`
+- Use when: A coding agent such as Claude Code stops early: it leaves steps undone, stops after a plan, or says a fix works without running anything. You can hook the moment the agent stops (the Claude Code `Stop` hook) and hand it the request and its final message.
+- Not when: You need to know whether the code is correct. That takes tests and a review, not a 10 second read of the final message. The task has an exact finish line code can check, such as a test command exiting 0. Check it in code. The agent runs unattended with no way to send it back to work. There is nothing to act on.
+- Files: `templates/done-check.spec.json`, `templates/done-check.state.json`
+
+## action-risk-gate
+
+Action risk gate. Decide whether a coding agent's shell command or file edit is risky enough that a person should confirm it before it runs.
+
+- Pattern: `fan_out`
+- Questions: `risky_command` (noul), `risky_file_change` (noul), `risk_kind` (choice)
+- State: `tool`, `command`, `file_path`, `content_preview`, `description`
+- Routes: `ask`, `allow`
+- Use when: A coding agent such as Claude Code runs shell commands and edits files with broad permissions, and a few of its actions (deleting data, force pushing, publishing, touching secrets or CI) should wait for a person. Allow and deny lists keep missing cases, because the same command can be routine in one form and destructive in another.
+- Not when: The rule is exact, such as never running `git push --force` or never writing outside the repo. Put it in the agent's permission rules, which are certain and free. You want to know whether the change is correct. That is a code review, not a 10 second risk call. Every action already waits for a person. The gate would add cost and nothing else.
+- Files: `templates/action-risk-gate.spec.json`, `templates/action-risk-gate.state.json`
+
+## model-tier
+
+Model tier. Decide how hard a new request to a coding agent is, so mechanical work can go to a cheaper model or subagent.
+
+- Pattern: `intent_routing`
+- Questions: `difficulty` (score), `high_stakes` (noul)
+- State: `prompt`
+- Routes: `hard`, `mechanical`, `standard`
+- Use when: A coding agent runs every request on its largest model, and many requests are mechanical: renames, formatting, moving files, running a command, finding where something lives. The agent can hand work to a subagent or a cheaper model, and you want advice on when to do it before the first turn starts.
+- Not when: The agent cannot pick a model per task. Advice it cannot act on only adds tokens. You need a plan or an estimate for the task. That is text generation and takes longer than 10 seconds. The request names the model or the tier itself. Read it in code.
+- Files: `templates/model-tier.spec.json`, `templates/model-tier.state.json`
+
 ## security-finding-triage
 
 Security finding triage. Decide whether a static analysis finding is reachable from user input, and how bad it is in context.

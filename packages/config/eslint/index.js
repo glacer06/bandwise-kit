@@ -55,6 +55,24 @@ const bandwise = [
       ],
     },
   },
+  {
+    // Live mode loads the SDK transport through live/transport.ts only. The shared runner never does.
+    name: "bandwise/cli-live",
+    files: ["src/live/**/*.ts", "src/runner/**/*.ts"],
+    ignores: ["**/*.test.ts", "src/live/transport.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            { name: "@bandwise/system-one-client", message: "Only src/live/transport.ts loads the SDK transport." },
+            { name: "@bandwise/system-one-client/fixture", message: "Live mode and the runner never use the fixture transport." },
+            { name: "@typesafe-ai/sdk", message: "Only @bandwise/system-one-client imports the TypeSafe SDK." },
+          ],
+        },
+      ],
+    },
+  },
 ];
 
 export default bandwise;

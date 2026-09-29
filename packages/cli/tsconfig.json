@@ -7,6 +7,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "src/__fixtures__"
+    "src/**/__fixtures__"
   ]
 }

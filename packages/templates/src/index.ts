@@ -4,12 +4,15 @@
 // two or three example states and one borderline case per question. Copy a spec into your repo as
 // bandwise/sets/<slug>.json, edit it, and try it with `bandwise run --local`.
 
+import { actionRiskGate } from "./templates/action-risk-gate.js";
 import { contextPruner } from "./templates/context-pruner.js";
+import { doneCheck } from "./templates/done-check.js";
 import { emailTriage } from "./templates/email-triage.js";
 import { errorTriage } from "./templates/error-triage.js";
 import { inboundEmailRouting } from "./templates/inbound-email-routing.js";
 import { leadEventScoring } from "./templates/lead-event-scoring.js";
 import { logLinePager } from "./templates/log-line-pager.js";
+import { modelTier } from "./templates/model-tier.js";
 import { prSafetyGate } from "./templates/pr-safety-gate.js";
 import { securityFindingTriage } from "./templates/security-finding-triage.js";
 import { wakeGate } from "./templates/wake-gate.js";
@@ -25,6 +28,9 @@ export const TEMPLATES: readonly Template[] = Object.freeze([
   logLinePager,
   contextPruner,
   wakeGate,
+  doneCheck,
+  actionRiskGate,
+  modelTier,
   securityFindingTriage,
   errorTriage,
   leadEventScoring,

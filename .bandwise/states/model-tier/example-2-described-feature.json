@@ -1,0 +1,3 @@
+{
+  "prompt": "Add a Download CSV button to the invoices table. It should export the rows currently shown, with the same columns, and use the existing toCsv helper in src/lib/csv.ts."
+}

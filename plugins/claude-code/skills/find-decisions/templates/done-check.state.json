@@ -1,0 +1,4 @@
+{
+  "request": "The date picker shows the wrong month in time zones west of UTC. Fix it.",
+  "last_reply": "Fixed. The picker built the month from a UTC date, so it slipped a day back west of UTC. It now uses the local date parts in src/datepicker/month.ts. I added a test for America/Los_Angeles and ran pnpm test src/datepicker: 14 passed, 0 failed."
+}

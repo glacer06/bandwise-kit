@@ -1,0 +1,5 @@
+{
+  "tool": "Bash",
+  "command": "git push --force origin main",
+  "description": "Push the rebased branch"
+}

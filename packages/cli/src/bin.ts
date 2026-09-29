@@ -3,7 +3,21 @@
 
 import { main } from "./main.js";
 
-const out = await main(process.argv.slice(2));
-if (out.stdout !== "") process.stdout.write(`${out.stdout}\n`);
-if (out.stderr !== "") process.stderr.write(`${out.stderr}\n`);
-process.exitCode = out.exitCode;
+/** All of stdin, for `bandwise hook`. The hook's own timeout covers a stdin that never closes. */
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) chunks.push(chunk as Buffer);
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+const argv = process.argv.slice(2);
+const out = await main(argv, { stdin: readStdin });
+if (argv[0] === "hook") {
+  // A hook must not linger on an open stdin or a slow socket after it answered. Exit once the
+  // answer is flushed, always with 0.
+  process.stdout.write(out.stdout === "" ? "" : `${out.stdout}\n`, () => process.exit(0));
+} else {
+  if (out.stdout !== "") process.stdout.write(`${out.stdout}\n`);
+  if (out.stderr !== "") process.stderr.write(`${out.stderr}\n`);
+  process.exitCode = out.exitCode;
+}

@@ -1,34 +1,14 @@
-// RunPorts for `bandwise run --local`: core's in-memory ports, the seed model registry and price
-// book, and the fixture transport. No network, no database, no System One key.
+// RunPorts for `bandwise run --local`: the shared CLI ports with the fixture transport. No network,
+// no database, no System One key.
 
-import {
-  type RunPorts,
-  SEED_COMPARATOR_PRICES,
-  SEED_MODEL_PROFILES,
-  SEED_MODEL_ROUTES,
-  SEED_SYSTEM_ONE_PRICES,
-  type SystemOneProvider,
-  type TenantContext,
-  allowAllLimiter,
-  allowAllQuota,
-  createMemoryActionRegistry,
-  createMemoryModelCatalog,
-  createMemoryPriceBook,
-  createMemoryRunSink,
-  staticKeyResolver,
-} from "@bandwise/core";
+import { SEED_MODEL_PROFILES, SEED_MODEL_ROUTES, type RunPorts, type SystemOneProvider, type TenantContext, staticKeyResolver } from "@bandwise/core";
 import { FixtureTransport, loadBundledFixtures } from "@bandwise/system-one-client/fixture";
+import { CLI_CONTEXT, CLI_ORG_ID, basePorts } from "../runner/index.js";
 
 /** The org every local run belongs to. Nothing is stored anywhere. */
-export const LOCAL_ORG_ID = "00000000-0000-7000-8000-00000000c0de";
+export const LOCAL_ORG_ID = CLI_ORG_ID;
 
-export const LOCAL_CONTEXT: TenantContext = {
-  orgId: LOCAL_ORG_ID,
-  actor: { type: "user", userId: "00000000-0000-7000-8000-00000000c0df", role: "owner", platformRole: null, impersonatorId: null },
-  client: "cli",
-  plan: "local",
-  requestId: "local",
-};
+export const LOCAL_CONTEXT: TenantContext = CLI_CONTEXT;
 
 /** The id a synthetic answer reports as its model: an alias's observed target, or a route's build. */
 export function localResolvedModel(sent: string, provider: SystemOneProvider): string {
@@ -50,18 +30,7 @@ export interface LocalPorts {
 /** Ports for one local run. `now` and `newId` come from the caller, so tests can fix them. */
 export function localPorts(now: () => number, newId: () => string): LocalPorts {
   const transport = new FixtureTransport(loadBundledFixtures(), { synthesize: true, resolveModel: localResolvedModel });
-  const ports: RunPorts = {
-    systemOne: transport,
-    models: createMemoryModelCatalog(SEED_MODEL_PROFILES, SEED_MODEL_ROUTES),
-    // Local mode sends nothing anywhere, so the key is a placeholder that never leaves the process.
-    keys: staticKeyResolver({ typesafe: "local-fixture", openrouter: "local-fixture", vercel: "local-fixture" }),
-    limiter: allowAllLimiter,
-    quota: allowAllQuota,
-    runs: createMemoryRunSink(newId),
-    actions: createMemoryActionRegistry(),
-    prices: createMemoryPriceBook([...SEED_SYSTEM_ONE_PRICES, ...SEED_COMPARATOR_PRICES]),
-    clock: now,
-    newId,
-  };
-  return { ports, transport };
+  // Local mode sends nothing anywhere, so the key is a placeholder that never leaves the process.
+  const keys = staticKeyResolver({ typesafe: "local-fixture", openrouter: "local-fixture", vercel: "local-fixture" });
+  return { ports: basePorts(transport, keys, now, newId), transport };
 }

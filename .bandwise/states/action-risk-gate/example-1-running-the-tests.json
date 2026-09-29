@@ -1,0 +1,5 @@
+{
+  "tool": "Bash",
+  "command": "pnpm --filter @acme/api test -- --run src/orders",
+  "description": "Run the order tests after the fix"
+}

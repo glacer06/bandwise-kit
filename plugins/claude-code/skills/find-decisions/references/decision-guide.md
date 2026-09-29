@@ -52,6 +52,9 @@ Flag the candidate and write no draft when:
 | Whether a log line or alert needs a person now | `log-line-pager` |
 | Which context items an agent keeps | `context-pruner` |
 | Whether an event wakes a waiting agent | `wake-gate` |
+| Whether a coding agent is really done before it stops | `done-check` |
+| Whether an agent's command or file edit needs a person to confirm it | `action-risk-gate` |
+| How hard a request is, to pick a cheaper model for easy work | `model-tier` |
 | Whether a scanner finding is real | `security-finding-triage` |
 | Owner, impact or cause of an error | `error-triage` |
 | Buying intent or next action from product events | `lead-event-scoring` |

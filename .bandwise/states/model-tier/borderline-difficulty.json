@@ -1,0 +1,3 @@
+{
+  "prompt": "The settings page crashes when the user has no avatar. Add a null check so it shows the initials instead."
+}

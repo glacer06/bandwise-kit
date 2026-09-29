@@ -469,6 +469,8 @@ export const OPERATION_CATALOG = rows([
   ["GET", "/platform/orgs", "platform_org.list", "platform_admin", "superadmin", "read", "2"],
   ["POST", "/platform/orgs/{id}/suspend", "platform_org.suspend", "platform_admin", "superadmin", "normal", "2"],
   ["PUT", "/platform/orgs/{id}/entitlements", "platform_org.set_entitlement", "platform_admin", "superadmin", "normal", "2"],
+  ["GET", "/platform/early-access", "platform_early_access.list", "platform_admin", "superadmin", "read", "2"],
+  ["POST", "/platform/early-access/remove", "platform_early_access.remove", "platform_admin", "superadmin", "normal", "2"],
   ["GET", "/platform/reports/{name}", "platform_report.get", "platform_admin", "superadmin", "read", "3"],
 ] as const);
 

@@ -1,0 +1,5 @@
+{
+  "tool": "Bash",
+  "command": "rm -rf packages/web/dist packages/web/.next && pnpm --filter web build",
+  "description": "Clean build after changing the config"
+}

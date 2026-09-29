@@ -1,0 +1,6 @@
+{
+  "tool": "Edit",
+  "file_path": ".github/workflows/release.yml",
+  "content_preview": "      - run: npm publish --access public\n        env:\n          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}",
+  "description": "Publish on every push to main"
+}

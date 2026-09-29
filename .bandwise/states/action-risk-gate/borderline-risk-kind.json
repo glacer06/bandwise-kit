@@ -1,0 +1,5 @@
+{
+  "tool": "Bash",
+  "command": "pnpm add zod@3.23.8 --filter @acme/api",
+  "description": "Add zod for request validation"
+}

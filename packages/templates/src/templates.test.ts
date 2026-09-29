@@ -22,6 +22,7 @@ import type { Template } from "./types.js";
  */
 const EXPECTED_WARNINGS: Record<string, string[]> = {
   "wake-gate": ["policy.all_gating_thresholded"],
+  "done-check": ["policy.all_gating_thresholded"],
   "inbound-email-routing": ["policy.all_gating_thresholded"],
 };
 
@@ -43,15 +44,18 @@ describe("template pack", () => {
     expect(getTemplate("nope")).toBeNull();
   });
 
-  it("covers the kit templates and the triage pack", () => {
+  it("covers the kit templates, the triage pack and the agent pack", () => {
     expect([...TEMPLATE_IDS].sort()).toEqual(
       [
+        "action-risk-gate",
         "context-pruner",
+        "done-check",
         "email-triage",
         "error-triage",
         "inbound-email-routing",
         "lead-event-scoring",
         "log-line-pager",
+        "model-tier",
         "pr-safety-gate",
         "security-finding-triage",
         "wake-gate",
