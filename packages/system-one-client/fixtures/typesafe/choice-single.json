@@ -2,7 +2,6 @@
   "name": "choice-single",
   "provider": "typesafe",
   "openapiVersion": "0.2.0",
-  "requestId": "req_fx_choice_single",
   "request": {
     "state": {
       "ticket": {
@@ -24,24 +23,26 @@
       }
     }
   },
+  "requestId": "req_fx_choice_single",
+  "source": "recorded",
   "response": {
     "model": "jev-1.13.0",
     "answers": {
       "department": {
         "type": "choice",
         "choice": "billing",
-        "confidence": 0.81,
         "probabilities": {
-          "billing": 0.88,
-          "technical": 0.04,
-          "account": 0.05,
-          "none_of_these": 0.03
-        }
+          "technical": 0,
+          "billing": 1,
+          "account": 0,
+          "none_of_these": 0
+        },
+        "confidence": 1
       }
     },
     "usage": {
-      "input_tokens": 112,
-      "output_tokens": 6
+      "input_tokens": 377,
+      "output_tokens": 48
     }
   }
 }

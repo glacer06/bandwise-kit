@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "model": "jev-1.13.0",
+  "input": {
+    "schema": {
+      "type": "object",
+      "required": [
+        "task"
+      ],
+      "properties": {
+        "task": {
+          "type": "string",
+          "maxLength": 8000
+        }
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "pick",
+      "questions": {
+        "profile": {
+          "type": "choice",
+          "instructions": {
+            "question": "A developer is about to start a coding agent session in their repository with this task. Which launch profile fits it best?",
+            "developer_task": "`task`"
+          },
+          "criteria": {
+            "light": "Mechanical work with every detail given and no design choice: rename a symbol, format files, move files, bump a version, run a given command, make a small edit spelled out in full, or find where something is defined.",
+            "standard": "Normal work with a clear goal in ordinary product code: build a described feature, fix a bug whose cause is known or easy to find, write tests for existing code, or refactor one module.",
+            "deep": "Work that needs design or investigation: choose an architecture, debug a failure whose cause is unknown, change code across many parts of the system, or settle a goal that is vague or open to several readings.",
+            "deep_review": "Deep work where a subtle mistake is costly, so an independent review of the result is worth a second session: authentication, permissions, secrets, payments, data deletion or migrations, production infrastructure, or a security fix.",
+            "unclear": "The task is too short or vague to tell what it needs, such as a single word or a greeting."
+          },
+          "meta": {
+            "label": "Launch profile"
+          }
+        }
+      }
+    }
+  ],
+  "policies": {
+    "profile": {
+      "type": "choice",
+      "gating": true,
+      "thresholds": {
+        "high": 0.7,
+        "medium": 0.4
+      },
+      "perOption": {
+        "light": {
+          "high": 0.8,
+          "medium": 0.5
+        }
+      },
+      "actions": {
+        "high": {
+          "kind": "auto"
+        },
+        "medium": {
+          "kind": "review"
+        },
+        "low": {
+          "kind": "review"
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "when": {
+        "q": "profile",
+        "eq": "light"
+      },
+      "output": "light"
+    },
+    {
+      "when": {
+        "q": "profile",
+        "eq": "deep"
+      },
+      "output": "deep"
+    },
+    {
+      "when": {
+        "q": "profile",
+        "eq": "deep_review"
+      },
+      "output": "deep_review"
+    }
+  ],
+  "defaultRoute": "standard",
+  "savings": {
+    "comparatorModel": "claude-haiku-4-5",
+    "estOutputTokensPerQuestion": 30,
+    "kind": "decision"
+  },
+  "onUnavailable": "review"
+}

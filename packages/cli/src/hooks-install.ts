@@ -11,6 +11,9 @@ export const SET_EVENTS: Readonly<Record<string, { event: "Stop" | "PreToolUse" 
   "model-tier": { event: "UserPromptSubmit" },
 });
 
+/** Sets in the folder that are not hooks. `launch-profile` runs before a session, from `bandwise launch`. */
+export const LAUNCH_SETS: readonly string[] = Object.freeze(["launch-profile"]);
+
 /** Seconds Claude Code waits for the command. The hook stops itself at 3 seconds; this covers start-up. */
 export const HOOK_COMMAND_TIMEOUT_S = 10;
 
@@ -35,6 +38,7 @@ export function planHooks(o: InstallOptions, files: readonly string[]): InstallP
   for (const file of [...files].sort()) {
     if (!file.endsWith(".json")) continue;
     const slug = file.replace(/\.json$/, "");
+    if (LAUNCH_SETS.includes(slug)) continue;
     const target = SET_EVENTS[slug];
     if (target === undefined) {
       ignored.push(file);

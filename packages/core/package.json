@@ -1,6 +1,6 @@
 {
   "name": "@bandwise/core",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Bandwise question set spec format, lints and run engine. Pure TypeScript, no I/O.",
   "keywords": [
     "bandwise",

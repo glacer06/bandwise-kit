@@ -6,7 +6,8 @@ import { RunResult } from "@bandwise/core";
 import { describe, expect, it } from "vitest";
 import { main } from "../main.js";
 import { readReceipts } from "../receipts/index.js";
-import { hookResponse, isTrustedCommand, lastExchange, mapHookInput, readProviderKey, redactSecrets, runHook, setSlug, shapeState } from "./index.js";
+import { fnv1a64 } from "../receipts/index.js";
+import { hookResponse, isTrustedCommand, lastExchange, mapHookInput, readLaunchProfile, readProviderKey, redactSecrets, runHook, setSlug, shapeState, taskStats } from "./index.js";
 import type { HookCommand } from "./hook.js";
 import { liveTransport } from "./transport.js";
 
@@ -207,7 +208,11 @@ describe("hook input mapping", () => {
 
   it("maps each event and skips what it should", () => {
     const read = (): string => transcript;
-    expect(mapHookInput("Stop", { transcript_path: "/t.jsonl" }, read)).toEqual({ kind: "run", candidate: { request: "Fix the flaky export test", last_reply: "Fixed and ran pnpm test: 12 passed." } });
+    expect(mapHookInput("Stop", { transcript_path: "/t.jsonl" }, read)).toEqual({
+      kind: "run",
+      candidate: { request: "Fix the flaky export test", last_reply: "Fixed and ran pnpm test: 12 passed." },
+      task: { requestAt: null, turns: 2, toolCalls: 1 },
+    });
     expect(mapHookInput("Stop", { transcript_path: "/t.jsonl", stop_hook_active: true }, read)).toEqual({ kind: "skip" });
     expect(mapHookInput("UserPromptSubmit", { prompt: "rename foo" }, read)).toEqual({ kind: "run", candidate: { prompt: "rename foo" } });
     expect(mapHookInput("UserPromptSubmit", { prompt: " " }, read)).toEqual({ kind: "skip" });
@@ -221,6 +226,30 @@ describe("hook input mapping", () => {
       kind: "run",
       candidate: { tool: "Edit", file_path: ".env", content_preview: "A=1" },
     });
+  });
+
+  it("counts turns and tool calls since the last typed request", () => {
+    const line = (x: unknown): string => JSON.stringify(x);
+    const t = [
+      line({ type: "user", timestamp: "2026-09-30T12:00:00.000Z", message: { content: "Old request" } }),
+      line({ type: "assistant", message: { id: "m0", content: [{ type: "tool_use", name: "Bash" }] } }),
+      line({ type: "user", timestamp: "2026-09-30T12:05:00.000Z", message: { content: "Add the compare report" } }),
+      // Claude Code writes one line per content block; lines with one message id are one turn.
+      line({ type: "assistant", message: { id: "m1", content: [{ type: "text", text: "Reading." }] } }),
+      line({ type: "assistant", message: { id: "m1", content: [{ type: "tool_use", name: "Read" }, { type: "tool_use", name: "Grep" }] } }),
+      line({ type: "user", message: { content: [{ type: "tool_result", content: "ok" }] } }),
+      line({ type: "assistant", isSidechain: true, message: { id: "s1", content: [{ type: "tool_use", name: "Bash" }] } }),
+      line({ type: "assistant", message: { id: "m2", content: [{ type: "tool_use", name: "Edit" }] } }),
+      line({ type: "assistant", message: { id: "m3", content: [{ type: "text", text: "Done." }] } }),
+    ].join("\n");
+    expect(taskStats(`{"cut\n${t}`)).toEqual({ requestAt: Date.parse("2026-09-30T12:05:00.000Z"), turns: 3, toolCalls: 3 });
+    expect(taskStats(line({ type: "assistant", message: { content: "no request in the tail" } }))).toBeNull();
+  });
+
+  it("reads a launch profile only when it looks like a profile id", () => {
+    expect(readLaunchProfile({ BANDWISE_LAUNCH_PROFILE: "standard", BANDWISE_LAUNCH_PICKED: "light-1.2" })).toEqual({ profile: "standard", picked: "light-1.2" });
+    expect(readLaunchProfile({ BANDWISE_LAUNCH_PROFILE: "rm -rf /", BANDWISE_LAUNCH_PICKED: "" })).toEqual({ profile: null, picked: null });
+    expect(readLaunchProfile({})).toEqual({ profile: null, picked: null });
   });
 
   it("trusts plain reads only", () => {
@@ -316,6 +345,36 @@ describe("bandwise hook", () => {
     expect(await main(["hook", "Stop"])).toEqual({ exitCode: 0, stdout: "", stderr: "" });
   });
 
+  it("a Stop receipt carries the task's counts and the launch profile, never its text", async () => {
+    const transcriptPath = join(tmp(), "t.jsonl");
+    writeFileSync(
+      transcriptPath,
+      [
+        JSON.stringify({ type: "user", timestamp: "2026-09-30T12:00:00.000Z", message: { content: "Refactor the billing module" } }),
+        JSON.stringify({ type: "assistant", message: { id: "a1", content: [{ type: "tool_use", name: "Edit" }] } }),
+        JSON.stringify({ type: "assistant", message: { id: "a2", content: [{ type: "text", text: "Refactored and ran the tests." }] } }),
+      ].join("\n"),
+    );
+    const { fetch } = fakeFetch();
+    const c = cmd({ event: "Stop", setPath: join(SETS, "done-check.json") });
+    await runHook(c, {
+      stdin: async () => JSON.stringify({ hook_event_name: "Stop", session_id: "sess-1", transcript_path: transcriptPath }),
+      env: { ...ENV, BANDWISE_LAUNCH_PROFILE: "standard", BANDWISE_LAUNCH_PICKED: "light" },
+      transport: () => liveTransport({ fetch }),
+      now: () => Date.parse("2026-09-30T12:01:30.000Z"),
+    });
+    const { receipts } = readReceipts(c.receiptsPath);
+    expect(receipts[0]?.session).toEqual({ key: fnv1a64("sess-1"), taskMs: 90_000, turns: 2, toolCalls: 1, profile: "standard", profilePicked: "light" });
+    const file = readFileSync(c.receiptsPath, "utf8");
+    expect(file).not.toContain("billing");
+    expect(file).not.toContain("sess-1");
+
+    // Other events carry no session block.
+    const p = cmd();
+    await runHook(p, { stdin: async () => forcePush, env: ENV, transport: () => liveTransport({ fetch }) });
+    expect(readReceipts(p.receiptsPath).receipts[0]?.session).toBeUndefined();
+  });
+
   it("Stop and UserPromptSubmit answers, outside shadow", async () => {
     const transcriptPath = join(tmp(), "t.jsonl");
     writeFileSync(
@@ -352,14 +411,24 @@ describe("bandwise hook", () => {
 });
 
 describe("the key rule", () => {
-  it("only live/key.ts reads a provider key variable", () => {
+  it("only live/key.ts reads a provider key variable, and only remote/credentials.ts the Bandwise token", () => {
     const src = at("../");
     const files = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === "__fixtures__" ? [] : files(join(dir, e.name))) : e.name.endsWith(".ts") && !e.name.endsWith(".test.ts") ? [join(dir, e.name)] : []));
-    const readers = files(src).filter((f) => /TYPESAFE_API_KEY|OPENROUTER_API_KEY|AI_GATEWAY_API_KEY|process\.env/.test(readFileSync(f, "utf8")) && !f.endsWith("main.ts"));
-    expect(readers.map((f) => f.slice(src.length))).toEqual(["live/key.ts"]);
+    const readers = (re: RegExp): string[] => files(src).filter((f) => re.test(readFileSync(f, "utf8")) && !f.endsWith("main.ts")).map((f) => f.slice(src.length));
+    expect(readers(/TYPESAFE_API_KEY|OPENROUTER_API_KEY|AI_GATEWAY_API_KEY/)).toEqual(["live/key.ts"]);
+    expect(readers(/process\.env/)).toEqual(["live/key.ts", "remote/credentials.ts"]);
+    expect(readers(/"BANDWISE_TOKEN"|"BANDWISE_BASE_URL"/)).toEqual(["remote/credentials.ts"]);
     // main.ts only names the variables in its usage text; it never reads process.env.
     expect(readFileSync(join(src, "main.ts"), "utf8")).not.toContain("process.env");
+  });
+
+  it("no CLI module starts a program until live/spawn.ts exists", () => {
+    const src = at("../");
+    const files = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? files(join(dir, e.name)) : e.name.endsWith(".ts") && !e.name.endsWith(".test.ts") ? [join(dir, e.name)] : []));
+    const importers = files(src).filter((f) => /["'](?:node:)?child_process["']/.test(readFileSync(f, "utf8")));
+    expect(importers.map((f) => f.slice(src.length)).filter((f) => f !== "live/spawn.ts")).toEqual([]);
   });
 
   it("only live/transport.ts imports system-one-client outside local mode's fixture subpath", () => {
@@ -368,5 +437,20 @@ describe("the key rule", () => {
       readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? (e.name === "__fixtures__" ? [] : files(join(dir, e.name))) : e.name.endsWith(".ts") ? [join(dir, e.name)] : []));
     const importers = files(src).filter((f) => /from "@bandwise\/system-one-client"/.test(readFileSync(f, "utf8")));
     expect(importers.map((f) => f.slice(src.length))).toEqual(["live/transport.ts"]);
+  });
+});
+
+describe("redaction parity with core", () => {
+  // Hosted hook mode loads without @bandwise/core, so the CLI keeps its own copy of the rules. The
+  // server's MCP path uses core's. Both must redact the same way.
+  it("keeps live/redact.ts identical to packages/core/src/redact/index.ts below the header", () => {
+    const body = (file: URL): string => {
+      const text = readFileSync(file, "utf8");
+      return text.slice(text.indexOf("const SECRET_PATTERNS"));
+    };
+    const cli = body(new URL("./redact.ts", import.meta.url));
+    const core = body(new URL("../../../core/src/redact/index.ts", import.meta.url));
+    expect(cli.length).toBeGreaterThan(0);
+    expect(cli).toBe(core);
   });
 });

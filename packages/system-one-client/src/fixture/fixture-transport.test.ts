@@ -225,8 +225,8 @@ describe("the engine on recorded fixtures", () => {
     expect(RunResult.parse(result).status).toBe("ok");
     expect(transport.calls.map((c) => c.fixture)).toEqual(["multi-stage-1", "multi-stage-2"]);
     expect(result.route).toBe("refund_queue");
-    expect(result.typesafeRequestId).toBe("req_fx_multi_1");
-    expect(result.cost.systemOneInputTokens).toBe(97 + 131);
+    expect(result.typesafeRequestId).toBe("req_fx_multi_stage_1");
+    expect(result.cost.systemOneInputTokens).toBe(364 + 372);
   });
 
   it("an OpenRouter fixture run stores the OpenRouter id and prices from usage.cost", async () => {

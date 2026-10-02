@@ -1,0 +1,10 @@
+{
+  "program": "claude",
+  "default": "standard",
+  "profiles": {
+    "light": { "sessions": [{ "model": "sonnet", "effort": "low" }] },
+    "standard": { "sessions": [{ "model": "sonnet", "effort": "medium" }] },
+    "deep": { "sessions": [{ "model": "opus", "effort": "high" }] },
+    "deep_review": { "sessions": [{ "model": "opus", "effort": "high" }, { "model": "sonnet", "effort": "medium" }] }
+  }
+}

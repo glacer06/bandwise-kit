@@ -3,7 +3,7 @@ import { defineTemplate } from "../types.js";
 export const doneCheck = defineTemplate({
   id: "done-check",
   title: "Done check",
-  job: "Decide whether a coding agent has really finished the request before it stops, or has work left or an unchecked claim.",
+  job: "Decide whether a coding agent has really finished the request before it stops, or has work left, an unchecked claim or work nobody asked for.",
   pattern: "confidence_routing",
   whenToUse: [
     "A coding agent such as Claude Code stops early: it leaves steps undone, stops after a plan, or says a fix works without running anything.",
@@ -16,9 +16,11 @@ export const doneCheck = defineTemplate({
   ],
   notes: [
     "Routes: `stop` lets the agent stop, `continue` sends it back with the answer as the reason. `turn_outcome` says which: `work_left` (parts of the request are undone) or `unverified` (it claims success without a check it ran).",
+    "`overreach` means the message reports work well outside the request, such as a new feature, a refactor, or files and docs nobody asked for. It has no route of its own, so it is logged and reported and never sends the agent back. A false alarm costs nothing, and the count shows how often the agent strays.",
     "Send the agent back only when `route` is `continue` and `overallAction` is `auto`. Any other result lets it stop, so a doubtful gate never keeps an agent looping.",
     "Start in `shadow`: the gate runs and logs what it would have done, and the agent always stops as it would without the hook. Move it to `controlled` after reading a week of results; there only a high band answer sends the agent back.",
-    "`unverified` has a stricter bar through `perOption`. It is the answer most likely to be a false alarm, and sending an agent back to rerun checks it already ran wastes a turn.",
+    "`unverified` and `overreach` have a stricter bar through `perOption`. They are the answers most likely to be false alarms: sending an agent back to rerun checks it already ran wastes a turn, and small tidying next to a fix is easy to over-call.",
+    "A message that names a check it could not run, and why, is honest and counts as `finished`. Only a success claim with no check and no reason is `unverified`.",
     "The gate sees only the request and the final message, not the tool calls in between. A reply that says which test or command it ran and what it showed counts as checked. Ask the agent, in your project instructions, to name the checks it ran in its final message.",
     "Limit repeats in code: if the gate sent the agent back on the last stop of this turn, let it stop this time. Claude Code marks that case with `stop_hook_active`.",
     "Outage rule: `onUnavailable` is `review`. During a System One outage the agent stops as usual.",
@@ -50,11 +52,13 @@ export const doneCheck = defineTemplate({
             },
             criteria: {
               finished:
-                "Everything the request asked for is done, and any claim that code works is backed by a test, build or command the message says it ran. Also pick this when the request needed no check, such as a question answered, an explanation or a plan the user asked for.",
+                "Everything the request asked for is done, and any claim that code works is backed by a test, build or command the message says it ran. Also pick this when the request needed no check, such as a question answered, an explanation or a plan the user asked for, or when the message names the check it could not run here and why.",
               unverified:
-                "The message says the change is done or fixed, but the claim rests on expectation, such as \"this should work now\", with no test, build or command it ran to show it.",
+                "The message says the change is done or fixed, but the claim rests on expectation, such as \"this should work now\", with no test, build or command it ran to show it and no reason given for skipping one.",
               work_left:
                 "Parts of the request are still undone: the message lists next steps it has not taken, leaves TODOs, covers only some of the items asked for, or stops after a plan when the request asked for the change itself.",
+              overreach:
+                "The requested work is done, but the message also reports sizable work nobody asked for: a new feature, a refactor of code the request did not touch, new files, docs or tests beyond the change, or another review round. Small edits the change needed, such as renaming a helper it had to modify, do not count.",
               waiting_on_user:
                 "The message asks the user a question it needs answered to go on, or names something only the user can give, such as credentials, access, an approval or a product decision. Asking permission to do work the request already asked for belongs under work_left.",
               unclear: "The message does not say enough to tell where the work stands.",
@@ -69,7 +73,7 @@ export const doneCheck = defineTemplate({
         type: "choice",
         gating: true,
         thresholds: { high: 0.7, medium: 0.4 },
-        perOption: { unverified: { high: 0.8, medium: 0.5 } },
+        perOption: { unverified: { high: 0.8, medium: 0.5 }, overreach: { high: 0.8, medium: 0.5 } },
         actions: { high: { kind: "auto" }, medium: { kind: "review" }, low: { kind: "review" } },
       },
     },
@@ -98,22 +102,22 @@ export const doneCheck = defineTemplate({
       },
     },
     {
-      name: "Blocked on a credential",
-      expect: "stop: the agent needs a key only the user can provide.",
+      name: "Fix plus an unrequested refactor",
+      expect: "overreach: the bug is fixed and tested, but it also rewrote a module and added docs nobody asked for. Logged only; the agent stops.",
       state: {
-        request: "Record the payment provider fixtures and commit them.",
+        request: "The login form lets you submit with an empty password. Block that and show an error.",
         last_reply:
-          "The recorder is ready, but it needs PAYMENTS_API_KEY in the environment and it is not set here. Can you export it in your shell and tell me when it is there? I will record and commit the fixtures after that.",
+          "Done. The form now blocks an empty password and shows \"Enter your password\". I ran pnpm test src/auth: 22 passed. While I was there I moved all the form validation into a new src/forms/validators.ts module, switched the signup and reset forms over to it, and wrote docs/forms.md explaining the new pattern.",
       },
     },
   ],
   borderline: {
     turn_outcome: {
-      why: "Most of the request is done and the agent asks whether to do the last part, which the request already covered.",
+      why: "A tested fix that also renamed a helper it had to change to make the fix clear: finished, or small overreach.",
       state: {
-        request: "Rename the userId column to accountId everywhere: the schema, the migration, the queries and the tests.",
+        request: "formatPrice shows $1,00 instead of $1.00 for German users on the English site. Fix it.",
         last_reply:
-          "I renamed the column in the schema and wrote the migration, and updated the queries in src/db. The tests still use userId in about 30 places. Do you want me to update the tests too?",
+          "Fixed. formatPrice took the locale from the browser instead of the site, so I pass the site locale in. The helper it called was named getLocale, which hid that, so I renamed it to getSiteLocale in the two files that use it. pnpm test src/pricing: 9 passed, including a new de-DE browser case.",
       },
     },
   },

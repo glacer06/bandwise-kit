@@ -24,6 +24,7 @@ const EXPECTED_WARNINGS: Record<string, string[]> = {
   "wake-gate": ["policy.all_gating_thresholded"],
   "done-check": ["policy.all_gating_thresholded"],
   "inbound-email-routing": ["policy.all_gating_thresholded"],
+  "launch-profile": ["policy.all_gating_thresholded"],
 };
 
 const each = TEMPLATES.map((t) => [t.id, t] as const);
@@ -53,6 +54,7 @@ describe("template pack", () => {
         "email-triage",
         "error-triage",
         "inbound-email-routing",
+        "launch-profile",
         "lead-event-scoring",
         "log-line-pager",
         "model-tier",

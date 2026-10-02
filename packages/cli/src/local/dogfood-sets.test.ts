@@ -4,15 +4,15 @@
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { SET_EVENTS } from "../hooks-install.js";
+import { LAUNCH_SETS, SET_EVENTS } from "../hooks-install.js";
 import { main } from "../main.js";
 
 const ROOT = fileURLToPath(new URL("../../../../.bandwise/", import.meta.url));
 const sets = readdirSync(`${ROOT}sets`).filter((f) => f.endsWith(".json")).map((f) => f.replace(/\.json$/, ""));
 
 describe("dogfood sets", () => {
-  it("are the agent pack, each with a known hook event", () => {
-    expect(sets.sort()).toEqual(Object.keys(SET_EVENTS).sort());
+  it("are the agent pack: each a known hook event, or a set bandwise launch runs", () => {
+    expect(sets.sort()).toEqual([...Object.keys(SET_EVENTS), ...LAUNCH_SETS].sort());
   });
 
   for (const set of sets) {

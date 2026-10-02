@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { main } from "../main.js";
-import { type Receipt, appendReceipt, buildReport, defaultReceiptsPath, parseSince, readReceipts, specHash } from "./index.js";
+import { type Receipt, type ReceiptSession, appendReceipt, buildCompare, buildReport, defaultReceiptsPath, formatCompare, parseSince, readReceipts, specHash } from "./index.js";
 
 const NOW = Date.parse("2026-09-28T12:00:00Z");
 
@@ -96,5 +96,60 @@ describe("report", () => {
     const empty = await main(["report", "--receipts", join(path, "none")]);
     expect(empty.stdout).toContain("no receipts");
     expect((await main(["report", "--since", "soon"])).exitCode).toBe(1);
+  });
+});
+
+describe("report --compare profile", () => {
+  const session = (over: Partial<ReceiptSession> = {}): ReceiptSession => ({ key: "fnv1a64:1", taskMs: 60_000, turns: 4, toolCalls: 6, profile: null, profilePicked: null, ...over });
+  const outcome = (value: string): Receipt["decisions"] => ({ turn_outcome: { value, band: "high", action: "auto", effectiveAction: "fallback", relevant: true } });
+
+  it("groups Stop receipts by profile used and picked, with medians and outcomes", () => {
+    const rs = [
+      receipt({ session: session({ profile: "standard", profilePicked: "standard", taskMs: 30_000, turns: 3, toolCalls: 2 }) }),
+      receipt({ session: session({ profile: "standard", profilePicked: "standard", taskMs: 90_000, turns: 5, toolCalls: 8 }), decisions: outcome("unverified") }),
+      receipt({ session: session({ profile: "standard", profilePicked: "standard", taskMs: null, turns: 7, toolCalls: 4 }) }),
+      receipt({ session: session({ profile: "standard", profilePicked: "light" }), decisions: outcome("work_left") }),
+      receipt({ session: session() }),
+      receipt({ session: session(), status: "timeout", decisions: {} }),
+      receipt(), // Written by an older CLI: no session block.
+      receipt({ source: "PreToolUse", set: "action-risk-gate", session: session({ profile: "heavy" }) }),
+      receipt({ at: "2026-09-20T00:00:00.000Z", session: session({ profile: "old" }) }),
+    ];
+    const r = buildCompare(rs, { now: NOW, sinceMs: parseSince("7d"), sinceText: "7d" });
+    expect(r.withoutSession).toBe(1);
+    expect(r.groups.map((g) => [g.profile, g.picked, g.tasks, g.differs])).toEqual([
+      ["none", "none", 2, false],
+      ["standard", "light", 1, true],
+      ["standard", "standard", 3, false],
+    ]);
+    const std = r.groups[2];
+    expect(std).toMatchObject({ timed: 2, taskP50Ms: 90_000, turnsP50: 5, toolCallsP50: 4, checked: 3, finished: 2, outcomes: { finished: 2, unverified: 1 } });
+    // A timeout still counts as a task, but done-check gave no answer for it.
+    expect(r.groups[0]).toMatchObject({ tasks: 2, checked: 1, finished: 1 });
+  });
+
+  it("says how small the sample is and that shadow picks change nothing", () => {
+    const r = buildCompare([receipt({ session: session({ profile: "standard", profilePicked: "light" }) })], { now: NOW });
+    const text = formatCompare(r, "/r.jsonl", 0);
+    expect(text).toContain("profile standard, pick light (pick differs): 1 task");
+    expect(text).toContain("time to stop p50 60.0 s (1 timed)");
+    expect(text).toContain("done-check finished 1 of 1");
+    expect(text).toContain("read the task counts before the times");
+    expect(formatCompare(buildCompare([], { now: NOW }), "/r.jsonl", 0)).toContain("no Stop receipts with session data");
+  });
+
+  it("bandwise report --compare profile prints the comparison, or JSON", async () => {
+    const path = join(mkdtempSync(join(tmpdir(), "bandwise-c-")), "r.jsonl");
+    appendReceipt(path, receipt({ session: session({ profile: "standard", profilePicked: "standard" }) }));
+    appendReceipt(path, receipt());
+    const text = await main(["report", "--compare", "profile", "--receipts", path], { now: () => NOW });
+    expect(text.exitCode).toBe(0);
+    expect(text.stdout).toContain("profile standard, pick standard: 1 task");
+    expect(text.stdout).toContain("1 Stop receipt without session data");
+    const json = await main(["report", "--compare", "profile", "--receipts", path, "--json"], { now: () => NOW });
+    expect(JSON.parse(json.stdout)).toMatchObject({ by: "profile", estimated: true, withoutSession: 1, groups: [{ profile: "standard", tasks: 1 }] });
+    const bad = await main(["report", "--compare", "set"], { now: () => NOW });
+    expect(bad).toMatchObject({ exitCode: 1 });
+    expect(bad.stderr).toContain("--compare takes profile");
   });
 });

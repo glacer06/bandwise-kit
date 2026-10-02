@@ -32,9 +32,10 @@
             "agent_final_message": "`last_reply`"
           },
           "criteria": {
-            "finished": "Everything the request asked for is done, and any claim that code works is backed by a test, build or command the message says it ran. Also pick this when the request needed no check, such as a question answered, an explanation or a plan the user asked for.",
-            "unverified": "The message says the change is done or fixed, but the claim rests on expectation, such as \"this should work now\", with no test, build or command it ran to show it.",
+            "finished": "Everything the request asked for is done, and any claim that code works is backed by a test, build or command the message says it ran. Also pick this when the request needed no check, such as a question answered, an explanation or a plan the user asked for, or when the message names the check it could not run here and why.",
+            "unverified": "The message says the change is done or fixed, but the claim rests on expectation, such as \"this should work now\", with no test, build or command it ran to show it and no reason given for skipping one.",
             "work_left": "Parts of the request are still undone: the message lists next steps it has not taken, leaves TODOs, covers only some of the items asked for, or stops after a plan when the request asked for the change itself.",
+            "overreach": "The requested work is done, but the message also reports sizable work nobody asked for: a new feature, a refactor of code the request did not touch, new files, docs or tests beyond the change, or another review round. Small edits the change needed, such as renaming a helper it had to modify, do not count.",
             "waiting_on_user": "The message asks the user a question it needs answered to go on, or names something only the user can give, such as credentials, access, an approval or a product decision. Asking permission to do work the request already asked for belongs under work_left.",
             "unclear": "The message does not say enough to tell where the work stands."
           },
@@ -55,6 +56,10 @@
       },
       "perOption": {
         "unverified": {
+          "high": 0.8,
+          "medium": 0.5
+        },
+        "overreach": {
           "high": 0.8,
           "medium": 0.5
         }

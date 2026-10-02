@@ -15,7 +15,7 @@ const isHook = argv[0] === "hook";
 // A hook never fails a session: anything main throws ends the hook with exit 0 and no output.
 const out = isHook
   ? await main(argv, { stdin: readStdin }).catch(() => ({ exitCode: 0, stdout: "", stderr: "" }))
-  : await main(argv, { stdin: readStdin });
+  : await main(argv, { stdin: readStdin, warn: (line) => process.stderr.write(`${line}\n`) });
 if (isHook) {
   // A hook must not linger on an open stdin or a slow socket after it answered. Exit once the
   // answer is flushed, always with 0.

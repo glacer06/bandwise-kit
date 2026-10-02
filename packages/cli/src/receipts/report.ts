@@ -135,3 +135,113 @@ export function formatReport(r: Report, path: string, skipped: number): string {
   if (skipped > 0) lines.push(`${skipped} line${skipped === 1 ? "" : "s"} in the file could not be read and were skipped.`);
   return lines.join("\n");
 }
+
+/** The done-check question whose answer says whether a task was finished. */
+const DONE_QUESTION = "turn_outcome";
+
+/** One row of `bandwise report --compare profile`: the tasks run on one profile with one pick. */
+export interface CompareGroup {
+  /** The profile the session ran on, or `none` outside `bandwise launch`. */
+  profile: string;
+  /** The profile the launch-profile set would have picked, or `none`. */
+  picked: string;
+  /** True when the pick was a different profile from the one used. */
+  differs: boolean;
+  tasks: number;
+  /** Tasks whose request time was in the transcript read, so their time counts. */
+  timed: number;
+  taskP50Ms: number | null;
+  turnsP50: number | null;
+  toolCallsP50: number | null;
+  /** Tasks done-check answered, and how many it called finished. */
+  checked: number;
+  finished: number;
+  outcomes: Record<string, number>;
+}
+
+export interface CompareReport {
+  by: "profile";
+  since: string | null;
+  groups: CompareGroup[];
+  /** Stop receipts with no session block, such as those from older CLIs. Not counted. */
+  withoutSession: number;
+  estimated: true;
+}
+
+/**
+ * Group Stop receipts by the launch profile used and the one picked. Medians, not means:
+ * one long task should not swing a small sample. Every row carries its sample size.
+ */
+export function buildCompare(receipts: readonly Receipt[], opts: { now: number; sinceMs?: number | null; sinceText?: string | null; set?: string | null }): CompareReport {
+  const cutoff = opts.sinceMs === undefined || opts.sinceMs === null ? null : opts.now - opts.sinceMs;
+  const picked = receipts.filter(
+    (r) => r.source === "Stop" && (cutoff === null || Date.parse(r.at) >= cutoff) && (opts.set === undefined || opts.set === null || r.set === opts.set),
+  );
+  const groups = new Map<string, Receipt[]>();
+  let withoutSession = 0;
+  for (const r of picked) {
+    if (r.session === undefined) {
+      withoutSession++;
+      continue;
+    }
+    const k = JSON.stringify([r.session.profile ?? "none", r.session.profilePicked ?? "none"]);
+    groups.set(k, [...(groups.get(k) ?? []), r]);
+  }
+  const median = (xs: number[]): number | null => pct([...xs].sort((a, b) => a - b), 50);
+  const rows: CompareGroup[] = [...groups.entries()]
+    .map(([k, rs]) => {
+      const [profile, pick] = JSON.parse(k) as [string, string];
+      const sessions = rs.map((r) => r.session).filter((s): s is NonNullable<Receipt["session"]> => s !== undefined);
+      const times = sessions.map((s) => s.taskMs).filter((t): t is number => t !== null);
+      const outcomes: Record<string, number> = {};
+      for (const r of rs) {
+        const d = r.status === "ok" ? r.decisions[DONE_QUESTION] : undefined;
+        if (d === undefined || d.value === null) continue;
+        const v = String(d.value);
+        outcomes[v] = (outcomes[v] ?? 0) + 1;
+      }
+      const checked = Object.values(outcomes).reduce((n, c) => n + c, 0);
+      return {
+        profile,
+        picked: pick,
+        differs: pick !== "none" && pick !== profile,
+        tasks: rs.length,
+        timed: times.length,
+        taskP50Ms: median(times),
+        turnsP50: median(sessions.map((s) => s.turns)),
+        toolCallsP50: median(sessions.map((s) => s.toolCalls)),
+        checked,
+        finished: outcomes["finished"] ?? 0,
+        outcomes,
+      };
+    })
+    .sort((a, b) => a.profile.localeCompare(b.profile) || a.picked.localeCompare(b.picked));
+  return { by: "profile", since: opts.sinceText ?? null, groups: rows, withoutSession, estimated: true };
+}
+
+const secs = (ms: number | null): string => (ms === null ? "n/a" : `${(ms / 1000).toFixed(1)} s`);
+
+/** Plain text for a person. */
+export function formatCompare(r: CompareReport, path: string, skipped: number): string {
+  const lines: string[] = [];
+  lines.push(`bandwise report --compare profile from ${path}${r.since === null ? "" : ` (last ${r.since})`}`);
+  if (r.groups.length === 0) {
+    lines.push("no Stop receipts with session data in this window. Only the Stop hook of this CLI version and later writes them.");
+  }
+  for (const g of r.groups) {
+    lines.push("");
+    lines.push(`profile ${g.profile}, pick ${g.picked}${g.differs ? " (pick differs)" : ""}: ${g.tasks} task${g.tasks === 1 ? "" : "s"}`);
+    lines.push(`  time to stop p50 ${secs(g.taskP50Ms)} (${g.timed} timed)`);
+    lines.push(`  turns p50 ${g.turnsP50 ?? "n/a"}, tool calls p50 ${g.toolCallsP50 ?? "n/a"}`);
+    const rest = Object.entries(g.outcomes)
+      .filter(([k]) => k !== "finished")
+      .map(([k, n]) => `${k} ${n}`)
+      .join(", ");
+    lines.push(`  done-check finished ${g.finished} of ${g.checked}${rest === "" ? "" : ` (${rest})`}`);
+  }
+  if (r.withoutSession > 0) lines.push("", `${r.withoutSession} Stop receipt${r.withoutSession === 1 ? "" : "s"} without session data (from an older CLI) not counted.`);
+  lines.push("");
+  lines.push("Estimates from one machine. Medians over small samples move a lot; read the task counts before the times. In shadow every task runs on the default profile, so a differing pick shows what the set would have chosen, not what it would have changed.");
+  if (skipped > 0) lines.push(`${skipped} line${skipped === 1 ? "" : "s"} in the file could not be read and were skipped.`);
+  return lines.join("\n");
+}

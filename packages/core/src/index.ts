@@ -25,6 +25,7 @@ export * from "./engine/stages.js";
 export * from "./lints/index.js";
 export * from "./interface.js";
 export * from "./authz.js";
+export * from "./redact/index.js";
 
 // In-memory ports for tests, fixtures and local runs
 export * from "./memory/ports.js";

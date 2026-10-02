@@ -2,7 +2,6 @@
   "name": "choice-none-chosen",
   "provider": "typesafe",
   "openapiVersion": "0.2.0",
-  "requestId": "req_fx_choice_none",
   "request": {
     "state": {
       "ticket": {
@@ -24,24 +23,26 @@
       }
     }
   },
+  "requestId": "req_fx_choice_none_chosen",
+  "source": "recorded",
   "response": {
     "model": "jev-1.13.0",
     "answers": {
       "department": {
         "type": "choice",
         "choice": "none_of_these",
-        "confidence": 0.77,
         "probabilities": {
-          "billing": 0.02,
-          "technical": 0.03,
-          "account": 0.02,
-          "none_of_these": 0.93
-        }
+          "account": 0,
+          "billing": 0,
+          "technical": 0,
+          "none_of_these": 1
+        },
+        "confidence": 1
       }
     },
     "usage": {
-      "input_tokens": 101,
-      "output_tokens": 6
+      "input_tokens": 365,
+      "output_tokens": 51
     }
   }
 }

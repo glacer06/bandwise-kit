@@ -2,7 +2,6 @@
   "name": "multi-stage-2",
   "provider": "typesafe",
   "openapiVersion": "0.2.0",
-  "requestId": "req_fx_multi_2",
   "request": {
     "state": {
       "ticket": "I was charged twice for my plan this month. Please refund one of the charges.",
@@ -25,17 +24,19 @@
       }
     }
   },
+  "requestId": "req_fx_multi_stage_2",
+  "source": "recorded",
   "response": {
     "model": "jev-1.13.0",
     "answers": {
       "refund": {
         "type": "noul",
-        "noul": 0.94
+        "noul": 0.99
       }
     },
     "usage": {
-      "input_tokens": 131,
-      "output_tokens": 3
+      "input_tokens": 372,
+      "output_tokens": 20
     }
   }
 }

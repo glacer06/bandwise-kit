@@ -1,6 +1,6 @@
 {
   "name": "@bandwise/system-one-client",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Transports for Bandwise runs: System One models through TypeSafe, OpenRouter or the Vercel AI Gateway with your own key, or recorded fixtures with no network.",
   "keywords": [
     "bandwise",
@@ -32,6 +32,11 @@
       "@bandwise/source": "./src/fixture/index.ts",
       "types": "./dist/fixture/index.d.ts",
       "import": "./dist/fixture/index.js"
+    },
+    "./server": {
+      "@bandwise/source": "./src/server.ts",
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
     }
   },
   "files": [

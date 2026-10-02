@@ -7,8 +7,9 @@ const REPO = fileURLToPath(new URL("../../../", import.meta.url));
 
 describe("bandwise hooks install", () => {
   it("maps each agent pack set to its event and writes nothing", () => {
-    const plan = planHooks({ setsDir: ".bandwise/sets", command: "bandwise", rollout: "shadow" }, ["model-tier.json", "done-check.json", "action-risk-gate.json", "other.json", "README.md"]);
+    const plan = planHooks({ setsDir: ".bandwise/sets", command: "bandwise", rollout: "shadow" }, ["model-tier.json", "done-check.json", "action-risk-gate.json", "launch-profile.json", "other.json", "README.md"]);
     expect(plan.sets).toEqual(["action-risk-gate", "done-check", "model-tier"]);
+    // launch-profile runs from bandwise launch, not a hook, so it is neither a hook nor a warning.
     expect(plan.ignored).toEqual(["other.json"]);
     expect(Object.keys(plan.settings.hooks).sort()).toEqual(["PreToolUse", "Stop", "UserPromptSubmit"]);
     expect(plan.settings.hooks["PreToolUse"]?.[0]?.matcher).toBe("Bash|Edit|Write|MultiEdit|NotebookEdit");
@@ -25,6 +26,7 @@ describe("bandwise hooks install", () => {
     expect(out.stderr).toContain("Nothing was written");
     const commands = Object.values(JSON.parse(out.stdout).hooks as Record<string, Array<{ hooks: Array<{ command: string }> }>>).flatMap((e) => e.flatMap((x) => x.hooks.map((h) => h.command)));
     expect(commands).toHaveLength(3);
+    expect(out.stderr).not.toContain("launch-profile");
     for (const c of commands) expect(c).toMatch(/--rollout shadow$/);
   });
 

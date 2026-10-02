@@ -55,6 +55,7 @@ Flag the candidate and write no draft when:
 | Whether a coding agent is really done before it stops | `done-check` |
 | Whether an agent's command or file edit needs a person to confirm it | `action-risk-gate` |
 | How hard a request is, to pick a cheaper model for easy work | `model-tier` |
+| Which model and effort a coding agent session should start with, picked from profiles you approved | `launch-profile` |
 | Whether a scanner finding is real | `security-finding-triage` |
 | Owner, impact or cause of an error | `error-triage` |
 | Buying intent or next action from product events | `lead-event-scoring` |

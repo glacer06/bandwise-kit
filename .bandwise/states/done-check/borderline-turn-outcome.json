@@ -1,4 +1,4 @@
 {
-  "request": "Rename the userId column to accountId everywhere: the schema, the migration, the queries and the tests.",
-  "last_reply": "I renamed the column in the schema and wrote the migration, and updated the queries in src/db. The tests still use userId in about 30 places. Do you want me to update the tests too?"
+  "request": "formatPrice shows $1,00 instead of $1.00 for German users on the English site. Fix it.",
+  "last_reply": "Fixed. formatPrice took the locale from the browser instead of the site, so I pass the site locale in. The helper it called was named getLocale, which hid that, so I renamed it to getSiteLocale in the two files that use it. pnpm test src/pricing: 9 passed, including a new de-DE browser case."
 }

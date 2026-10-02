@@ -66,7 +66,7 @@ Wake gate. Decide whether an event should wake a sleeping agent now, later, or n
 
 ## done-check
 
-Done check. Decide whether a coding agent has really finished the request before it stops, or has work left or an unchecked claim.
+Done check. Decide whether a coding agent has really finished the request before it stops, or has work left, an unchecked claim or work nobody asked for.
 
 - Pattern: `confidence_routing`
 - Questions: `turn_outcome` (choice)
@@ -99,6 +99,18 @@ Model tier. Decide how hard a new request to a coding agent is, so mechanical wo
 - Use when: A coding agent runs every request on its largest model, and many requests are mechanical: renames, formatting, moving files, running a command, finding where something lives. The agent can hand work to a subagent or a cheaper model, and you want advice on when to do it before the first turn starts.
 - Not when: The agent cannot pick a model per task. Advice it cannot act on only adds tokens. You need a plan or an estimate for the task. That is text generation and takes longer than 10 seconds. The request names the model or the tier itself. Read it in code.
 - Files: `templates/model-tier.spec.json`, `templates/model-tier.state.json`
+
+## launch-profile
+
+Launch profile. Pick a launch profile for a coding agent session before it starts, from a list the host has approved.
+
+- Pattern: `intent_routing`
+- Questions: `profile` (choice)
+- State: `task`
+- Routes: `light`, `deep`, `deep_review`, `standard`
+- Use when: A host starts coding agent sessions, such as Claude Code, and can set the model and effort at launch but not change them mid-session. Many tasks are mechanical and a few need the strongest model, and you want the pick made once, before the first turn, from profiles you have reviewed.
+- Not when: The session is already running. A hook inside it cannot change its model; use model-tier for advice instead. The task names the model or the effort itself. Read it in code. You want the set to return a model name or a flag. It only picks a profile id; the host maps the id to a model and effort from its own reviewed file.
+- Files: `templates/launch-profile.spec.json`, `templates/launch-profile.state.json`
 
 ## security-finding-triage
 

@@ -2,7 +2,6 @@
   "name": "noul-single",
   "provider": "typesafe",
   "openapiVersion": "0.2.0",
-  "requestId": "req_fx_noul_single",
   "request": {
     "state": {
       "ticket": {
@@ -22,17 +21,19 @@
       }
     }
   },
+  "requestId": "req_fx_noul_single",
+  "source": "recorded",
   "response": {
     "model": "jev-1.13.0",
     "answers": {
       "is_urgent": {
         "type": "noul",
-        "noul": 0.96
+        "noul": 0.97
       }
     },
     "usage": {
-      "input_tokens": 84,
-      "output_tokens": 3
+      "input_tokens": 337,
+      "output_tokens": 23
     }
   }
 }

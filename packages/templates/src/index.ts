@@ -10,6 +10,7 @@ import { doneCheck } from "./templates/done-check.js";
 import { emailTriage } from "./templates/email-triage.js";
 import { errorTriage } from "./templates/error-triage.js";
 import { inboundEmailRouting } from "./templates/inbound-email-routing.js";
+import { launchProfile } from "./templates/launch-profile.js";
 import { leadEventScoring } from "./templates/lead-event-scoring.js";
 import { logLinePager } from "./templates/log-line-pager.js";
 import { modelTier } from "./templates/model-tier.js";
@@ -31,6 +32,7 @@ export const TEMPLATES: readonly Template[] = Object.freeze([
   doneCheck,
   actionRiskGate,
   modelTier,
+  launchProfile,
   securityFindingTriage,
   errorTriage,
   leadEventScoring,

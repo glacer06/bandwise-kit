@@ -17,6 +17,12 @@ export const ignores = [
 ];
 
 /** @type {import("eslint").Linter.Config[]} */
+/** Only src/live/spawn.ts may start another program: the agent that bandwise launch starts. */
+const NO_CHILD_PROCESS = ["child_process", "node:child_process"].map((name) => ({
+  name,
+  message: "Only src/live/spawn.ts starts a program.",
+}));
+
 const bandwise = [
   ...ignores,
   js.configs.recommended,
@@ -50,6 +56,7 @@ const bandwise = [
           paths: [
             { name: "@bandwise/system-one-client", message: "Local mode imports @bandwise/system-one-client/fixture only." },
             { name: "@typesafe-ai/sdk", message: "Local mode never loads the TypeSafe SDK." },
+            ...NO_CHILD_PROCESS,
           ],
         },
       ],
@@ -57,9 +64,10 @@ const bandwise = [
   },
   {
     // Live mode loads the SDK transport through live/transport.ts only. The shared runner never does.
+    // Only live/spawn.ts starts another program.
     name: "bandwise/cli-live",
     files: ["src/live/**/*.ts", "src/runner/**/*.ts"],
-    ignores: ["**/*.test.ts", "src/live/transport.ts"],
+    ignores: ["**/*.test.ts", "src/live/transport.ts", "src/live/spawn.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -67,6 +75,32 @@ const bandwise = [
           paths: [
             { name: "@bandwise/system-one-client", message: "Only src/live/transport.ts loads the SDK transport." },
             { name: "@bandwise/system-one-client/fixture", message: "Live mode and the runner never use the fixture transport." },
+            { name: "@typesafe-ai/sdk", message: "Only @bandwise/system-one-client imports the TypeSafe SDK." },
+            ...NO_CHILD_PROCESS,
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The rest of the CLI (main.ts, receipts, hooks install) never starts a program either.
+    name: "bandwise/cli-no-spawn",
+    files: ["src/*.ts", "src/receipts/**/*.ts"],
+    ignores: ["**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": ["error", { paths: [...NO_CHILD_PROCESS] }],
+    },
+  },
+  {
+    // spawn.ts starts the agent and imports nothing that reaches the SDK.
+    name: "bandwise/cli-spawn",
+    files: ["src/live/spawn.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            { name: "@bandwise/system-one-client", message: "spawn.ts starts a program and never loads the SDK transport." },
             { name: "@typesafe-ai/sdk", message: "Only @bandwise/system-one-client imports the TypeSafe SDK." },
           ],
         },

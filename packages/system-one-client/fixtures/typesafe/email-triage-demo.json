@@ -2,7 +2,6 @@
   "name": "email-triage-demo",
   "provider": "typesafe",
   "openapiVersion": "0.2.0",
-  "requestId": "req_fx_email_triage",
   "request": {
     "state": {
       "email": {
@@ -76,21 +75,22 @@
       }
     }
   },
+  "requestId": "req_fx_email_triage_demo",
+  "source": "recorded",
   "response": {
     "model": "jev-1.13.0",
     "answers": {
       "real_person": {
         "type": "noul",
-        "noul": 0.97
+        "noul": 0.9
       },
       "someone_waiting": {
         "type": "noul",
-        "noul": 0.91
+        "noul": 0.97
       },
       "cost_of_ignoring": {
         "type": "score",
-        "score": 2.21,
-        "confidence": 0.78,
+        "score": 2.02,
         "legend": {
           "0": "Nothing. Safe to ignore.",
           "1": "Minor. A small delay or a mildly annoyed contact.",
@@ -98,40 +98,41 @@
           "3": "Severe. Legal, financial, or safety consequences."
         },
         "probabilities": {
-          "0": 0.01,
-          "1": 0.09,
-          "2": 0.58,
-          "3": 0.32
-        }
+          "0": 0,
+          "1": 0.01,
+          "2": 0.96,
+          "3": 0.03
+        },
+        "confidence": 0.96
       },
       "category": {
         "type": "choice",
         "choice": "work_request",
-        "confidence": 0.84,
         "probabilities": {
-          "work_request": 0.9,
-          "scheduling": 0.03,
-          "personal": 0.01,
-          "newsletter": 0.01,
-          "transactional": 0.01,
-          "none_of_these": 0.04
-        }
+          "transactional": 0,
+          "personal": 0,
+          "work_request": 1,
+          "scheduling": 0,
+          "none_of_these": 0,
+          "newsletter": 0
+        },
+        "confidence": 1
       },
       "work_type": {
         "type": "choice",
         "choice": "decision",
-        "confidence": 0.8,
         "probabilities": {
-          "decision": 0.87,
-          "information": 0.07,
-          "review": 0.04,
-          "none_of_these": 0.02
-        }
+          "information": 0,
+          "review": 0,
+          "decision": 1,
+          "none_of_these": 0
+        },
+        "confidence": 1
       }
     },
     "usage": {
-      "input_tokens": 612,
-      "output_tokens": 28
+      "input_tokens": 895,
+      "output_tokens": 167
     }
   }
 }
